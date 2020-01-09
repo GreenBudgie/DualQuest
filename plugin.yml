@@ -1,0 +1,4 @@
+name: DualQuest
+main: dualquest.game.Plugin
+api-version: 1.15
+version: 0.1 Alpha
