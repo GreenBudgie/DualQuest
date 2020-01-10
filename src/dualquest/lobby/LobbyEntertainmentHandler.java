@@ -1,7 +1,8 @@
 package dualquest.lobby;
 
-import dualquest.game.DualQuest;
+import dualquest.game.logic.DualQuest;
 import dualquest.game.Plugin;
+import dualquest.game.player.PlayerHandler;
 import dualquest.util.ItemUtils;
 import dualquest.util.MathUtils;
 import dualquest.util.TaskManager;
@@ -46,12 +47,13 @@ public class LobbyEntertainmentHandler implements Listener {
 
 	public static void init() {
 		Bukkit.getPluginManager().registerEvents(new LobbyEntertainmentHandler(), Plugin.INSTANCE);
+		Bukkit.getPluginManager().registerEvents(new LobbyProtectionListener(), Plugin.INSTANCE);
 		pottedMaterials = getPottedMaterials();
 		noteBlockInstruments = getNoteBlockInstruments();
 	}
 
 	private static boolean isInLobby(Player p) {
-		return DualQuest.isInLobby(p);
+		return PlayerHandler.isInLobby(p);
 	}
 
 	private static Map<Material, String> getNoteBlockInstruments() {

@@ -1,18 +1,19 @@
-package dualquest.game;
+package dualquest.game.logic;
 
 import de.slikey.effectlib.EffectManager;
+import dualquest.game.Plugin;
 import dualquest.lobby.LobbyEntertainmentHandler;
+import dualquest.lobby.LobbyParkourHandler;
+import dualquest.lobby.sign.LobbySignManager;
+import dualquest.util.TaskManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 
 public class DualQuest implements Listener {
 
@@ -24,8 +25,11 @@ public class DualQuest implements Listener {
 	public static void init() {
 		Bukkit.getPluginManager().registerEvents(new DualQuest(), Plugin.INSTANCE);
 		Bukkit.getPluginManager().registerEvents(new LobbyEntertainmentHandler(), Plugin.INSTANCE);
-		LobbyEntertainmentHandler.init();
 		WorldManager.init();
+		TaskManager.init();
+		LobbyParkourHandler.init();
+		LobbyEntertainmentHandler.init();
+		LobbySignManager.init();
 	}
 
 	public static void startGame() {
@@ -34,10 +38,6 @@ public class DualQuest implements Listener {
 
 	public static void endGame() {
 
-	}
-
-	public static boolean isInLobby(Player p) {
-		return WorldManager.getLobby().getPlayers().contains(p);
 	}
 
 	@EventHandler

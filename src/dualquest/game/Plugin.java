@@ -3,7 +3,8 @@ package dualquest.game;
 import dualquest.command.CommandGM;
 import dualquest.command.CommandPing;
 import dualquest.command.CommandTest;
-import org.bukkit.command.CommandExecutor;
+import dualquest.game.logic.DualQuest;
+import dualquest.game.logic.GameState;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Plugin extends JavaPlugin {

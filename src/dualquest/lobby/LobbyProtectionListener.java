@@ -1,7 +1,8 @@
 package dualquest.lobby;
 
-import dualquest.game.DualQuest;
-import dualquest.game.WorldManager;
+import dualquest.game.logic.DualQuest;
+import dualquest.game.logic.WorldManager;
+import dualquest.game.player.PlayerHandler;
 import org.bukkit.GameMode;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
@@ -22,7 +23,7 @@ import org.bukkit.event.vehicle.VehicleEntityCollisionEvent;
 public class LobbyProtectionListener implements Listener {
 
 	private boolean isInLobby(Player p) {
-		return DualQuest.isInLobby(p);
+		return PlayerHandler.isInLobby(p);
 	}
 
 	@EventHandler

@@ -1,9 +1,10 @@
 package dualquest.lobby;
 
 import com.google.common.collect.Lists;
-import dualquest.game.DualQuest;
+import dualquest.game.logic.DualQuest;
 import dualquest.game.Plugin;
-import dualquest.game.WorldManager;
+import dualquest.game.logic.WorldManager;
+import dualquest.game.player.PlayerHandler;
 import dualquest.util.EntityUtils;
 import dualquest.util.WorldUtils;
 import org.bukkit.*;
@@ -105,7 +106,7 @@ public class LobbyParkourHandler implements Listener {
 	@EventHandler
 	public void setCheckpoint(PlayerMoveEvent e) {
 		Player p = e.getPlayer();
-		if(DualQuest.isInLobby(p) && p.getActivePotionEffects().isEmpty()) {
+		if(PlayerHandler.isInLobby(p) && p.getActivePotionEffects().isEmpty()) {
 			for(LobbyParkour parkour : parkours) {
 				if(!isPassing(p, parkour) && WorldUtils.compareIntegerLocations(parkour.getStartLocation(), p.getLocation())) {
 					startPassing(p, parkour);
@@ -122,7 +123,7 @@ public class LobbyParkourHandler implements Listener {
 
 	@EventHandler
 	public void cleanup(PlayerQuitEvent e) {
-		if(DualQuest.isInLobby(e.getPlayer())) passingParkours.remove(e.getPlayer());
+		if(PlayerHandler.isInLobby(e.getPlayer())) passingParkours.remove(e.getPlayer());
 	}
 
 }

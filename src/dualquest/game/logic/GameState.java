@@ -1,4 +1,4 @@
-package dualquest.game;
+package dualquest.game.logic;
 
 import java.util.stream.Stream;
 
