@@ -2,3 +2,13 @@ name: DualQuest
 main: dualquest.game.Plugin
 api-version: 1.15
 version: 0.1 Alpha
+commands:
+  gm:
+    description: Fast gamemode switch
+    usage: /gm [0-3]
+  ping:
+    description: Shows ping
+    usage: /ping [player]
+  test:
+    description: Test command, debug
+    usage: /test

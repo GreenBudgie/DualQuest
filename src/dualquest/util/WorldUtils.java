@@ -2,6 +2,11 @@ package dualquest.util;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.craftbukkit.v1_15_R1.CraftWorld;
+import org.bukkit.entity.Entity;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class WorldUtils {
 
@@ -13,6 +18,15 @@ public class WorldUtils {
 	 */
 	public static boolean compareIntegerLocations(Location l1, Location l2) {
 		return l1.getBlockX() == l2.getBlockX() && l1.getBlockY() == l2.getBlockY() && l1.getBlockZ() == l2.getBlockZ();
+	}
+
+	public static <T extends Entity> List<T> getEntitiesInRange(Location pivot, double range, Class<T> entityClass) {
+		if(!pivot.isWorldLoaded()) throw new IllegalArgumentException("Pivot location's world is not present!");
+		List<T> list = new ArrayList<>();
+		pivot.getWorld().getEntities().stream()
+				.filter(entity -> entityClass.isInstance(entity) && entity.getLocation().getWorld() == pivot.getWorld() && entity.getLocation().distance(pivot) <= range)
+				.forEach(entity -> list.add((T) entity));
+		return list;
 	}
 
 	/**
