@@ -31,7 +31,7 @@ public class SignWorld extends LobbySign {
 				WorldManager.makeWorld();
 			} else {
 				if(player.isSneaking()) {
-					//TODO WorldManager.deleteWorld();
+					WorldManager.deleteWorld();
 				}
 			}
 		}

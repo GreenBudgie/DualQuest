@@ -6,6 +6,10 @@ public enum GameState {
 
 	STOPPED, VOTING, PREPARING, GAME, ENDING;
 
+	public void set() {
+		setState(this);
+	}
+
 	private static GameState currentState = STOPPED;
 
 	public static boolean isState(GameState gameState) {
@@ -22,6 +26,10 @@ public enum GameState {
 
 	public static void setState(GameState newState) {
 		currentState = newState;
+	}
+
+	public static boolean isPreGame() {
+		return isState(VOTING, PREPARING);
 	}
 
 }

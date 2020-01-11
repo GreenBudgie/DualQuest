@@ -2,20 +2,25 @@ package dualquest.game.logic;
 
 import dualquest.game.player.PlayerHandler;
 import dualquest.lobby.sign.LobbySignManager;
+import dualquest.util.EntityUtils;
 import dualquest.util.MathUtils;
 import dualquest.util.TaskManager;
 import org.bukkit.*;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
-import org.bukkit.util.NumberConversions;
+
+import java.io.File;
 
 public class WorldManager {
 
-	private static World lobby, gameWorld;
-	private static Location attackersSpawn, spectatorsSpawn, questersSpawn, spawnLocation;
-	public static boolean generating;
 	private static final int distanceBetweenTeams = 400;
+	public static boolean generating;
+	private static World lobby, gameWorld;
+	private static Location attackersSpawn;
+	private static Location spectatorsSpawn;
+	private static Location questersSpawn;
+	private static Location spawnLocation;
 
 	public static void init() {
 		lobby = Bukkit.getWorld("DualQuestLobby");
@@ -34,6 +39,8 @@ public class WorldManager {
 			bar.setProgress(1);
 			PlayerHandler.getLobbyPlayers().forEach(bar::addPlayer);
 			bar.setVisible(true);
+			Bukkit.getOnlinePlayers()
+					.forEach(player -> EntityUtils.sendActionBarInfo(player, ChatColor.GOLD + "" + ChatColor.BOLD + "Генерируется мир. Сервер зависнет на это время."));
 
 			gameWorld = Bukkit.createWorld(new WorldCreator("GameWorld"));
 			gameWorld.setDifficulty(Difficulty.HARD);
@@ -44,7 +51,7 @@ public class WorldManager {
 			gameWorld.setPVP(false);
 			gameWorld.setTime(0);
 			WorldBorder border = gameWorld.getWorldBorder();
-			border.setSize(8);
+			border.setSize(getRelativeWorldSize());
 			border.setWarningTime(0);
 			border.setWarningDistance(0);
 			border.setDamageBuffer(0);
@@ -72,8 +79,35 @@ public class WorldManager {
 		}
 	}
 
+	public static void deleteWorld() {
+		if(hasWorld()) {
+			deleteWorld(gameWorld);
+			gameWorld = null;
+		}
+	}
+
+	private static boolean deleteWorld(World world) {
+		Bukkit.unloadWorld(world, false);
+		return deleteWorld(world.getWorldFolder());
+	}
+
+	private static boolean deleteWorld(File path) {
+		if(path.exists()) {
+			File[] files = path.listFiles();
+			if(files == null) return false;
+			for(File file : files) {
+				if(file.isDirectory()) {
+					deleteWorld(file);
+				} else {
+					file.delete();
+				}
+			}
+		}
+		return path.delete();
+	}
+
 	public static int getRelativeWorldSize() {
-		return distanceBetweenTeams + PlayerHandler.getPlayerList().getDQPlayers().size() * 32;
+		return distanceBetweenTeams + Bukkit.getOnlinePlayers().size() * 32;
 	}
 
 	public static int getRealWorldSize() {
@@ -88,6 +122,22 @@ public class WorldManager {
 
 	private static boolean outside(int z) {
 		return Math.abs(z - spawnLocation.getBlockZ()) > getRealWorldSize() / 2;
+	}
+
+	public static Location getSpawnLocation() {
+		return spawnLocation;
+	}
+
+	public static Location getAttackersSpawn() {
+		return attackersSpawn;
+	}
+
+	public static Location getSpectatorsSpawn() {
+		return spectatorsSpawn;
+	}
+
+	public static Location getQuestersSpawn() {
+		return questersSpawn;
 	}
 
 	public static World getLobby() {

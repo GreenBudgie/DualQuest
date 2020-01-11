@@ -1,6 +1,7 @@
 package dualquest.lobby.sign;
 
 import dualquest.game.logic.DualQuest;
+import dualquest.game.logic.GameStartManager;
 import dualquest.game.logic.GameState;
 import dualquest.game.logic.WorldManager;
 import dualquest.game.player.PlayerHandler;
@@ -30,7 +31,7 @@ public class SignStart extends LobbySign {
 	public void onClick(Player player) {
 		if(!GameState.isPlaying()) {
 			if(player.isOp()) {
-				DualQuest.startGame();
+				GameStartManager.startGame();
 			}
 		} else {
 			PlayerHandler.joinSpectators(player);

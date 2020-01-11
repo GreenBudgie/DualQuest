@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PlayerList implements Iterable<DQPlayer> {
 
@@ -39,6 +40,14 @@ public class PlayerList implements Iterable<DQPlayer> {
 
 	public Selector selector() {
 		return new Selector(players);
+	}
+
+	public int size() {
+		return players.size();
+	}
+
+	public Stream<DQPlayer> stream() {
+		return players.stream();
 	}
 
 	@Override

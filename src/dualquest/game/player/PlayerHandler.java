@@ -1,15 +1,21 @@
 package dualquest.game.player;
 
 import com.google.common.collect.Streams;
-import dualquest.game.logic.DualQuest;
+import dualquest.game.logic.ScoreboardHandler;
 import dualquest.game.logic.WorldManager;
+import dualquest.util.Broadcaster;
+import org.bukkit.ChatColor;
+import org.bukkit.World;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.scoreboard.ScoreboardManager;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -22,6 +28,10 @@ public class PlayerHandler implements Listener {
 
 	public static PlayerList getPlayerList() {
 		return playerList;
+	}
+
+	public static void initPlayerList(Collection<? extends Player> players) {
+		playerList = new PlayerList(players.stream().map(DQPlayer::new).collect(Collectors.toList()));
 	}
 
 	public static List<Player> getSpectators() {
@@ -58,6 +68,65 @@ public class PlayerHandler implements Listener {
 
 	public static void joinSpectators(Player player) {
 		spectators.add(player);
+	}
+
+	public static void reset(Player player) {
+		player.getInventory().clear();
+		player.getActivePotionEffects().forEach(ef -> player.removePotionEffect(ef.getType()));
+		heal(player);
+		player.setFireTicks(0);
+		player.setNoDamageTicks(0);
+		player.setExp(0);
+		player.setLevel(0);
+	}
+
+	public static void heal(Player player) {
+		player.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(20);
+		player.setHealth(20);
+		player.setSaturation(20);
+		player.setExhaustion(20);
+		player.setFoodLevel(20);
+	}
+
+	@EventHandler
+	public void preJoin(AsyncPlayerPreLoginEvent e) {
+		if(WorldManager.generating) {
+			e.setKickMessage(ChatColor.GOLD + "Сейчас идет генерация мира, зайди немного позже");
+			e.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
+		}
+	}
+
+	@EventHandler
+	public void join(PlayerJoinEvent e) {
+		e.setJoinMessage(null);
+		Player player = e.getPlayer();
+		DQPlayer dqPlayer = DQPlayer.fromPlayer(player);
+		if(dqPlayer == null) {
+			reset(player);
+			player.teleport(WorldManager.getLobby().getSpawnLocation());
+			Broadcaster.inWorld(WorldManager.getLobby()).toChat(ChatColor.GOLD + player.getName() + ChatColor.YELLOW + " присоединился");
+		} else {
+			dqPlayer.rejoin(player);
+		}
+		ScoreboardHandler.updateScoreboardTeams();
+	}
+
+	@EventHandler
+	public void leave(PlayerQuitEvent e) {
+		Player player = e.getPlayer();
+		if(isSpectator(player)) {
+			reset(player);
+			player.teleport(WorldManager.getLobby().getSpawnLocation());
+			Broadcaster.inWorld(WorldManager.getGameWorld()).toChat(ChatColor.GRAY + player.getName() + ChatColor.DARK_GRAY + " отключился");
+		}
+		if(isPlaying(player)) {
+			DQPlayer dqPlayer = DQPlayer.fromPlayer(player);
+			if(dqPlayer != null) dqPlayer.quit();
+		}
+		if(isInLobby(player)) {
+			Broadcaster.inWorld(WorldManager.getLobby()).toChat(ChatColor.GOLD + player.getName() + ChatColor.YELLOW + " отключился");
+		}
+		ScoreboardHandler.updateScoreboardTeams();
 	}
 
 }
