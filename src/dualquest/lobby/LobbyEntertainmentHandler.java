@@ -24,6 +24,8 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -54,13 +56,20 @@ public class LobbyEntertainmentHandler implements Listener {
 		Map<Material, String> map = new HashMap<>();
 		map.put(Material.DARK_OAK_PLANKS, "Бас-гитара");
 		map.put(Material.RED_SAND, "Малый барабан");
+		map.put(Material.BLUE_STAINED_GLASS, "Палочки");
 		map.put(Material.OBSIDIAN, "Большой барабан");
 		map.put(Material.BONE_BLOCK, "Ксилофон");
-		map.put(Material.GOLD_BLOCK, "Звонок");
+		map.put(Material.GOLD_BLOCK, "Металлофон");
 		map.put(Material.CLAY, "Флейта");
 		map.put(Material.PACKED_ICE, "Колокол");
 		map.put(Material.BROWN_WOOL, "Гитара");
-		map.put(Material.DIRT, "Пианино");
+		map.put(Material.LAPIS_BLOCK, "Пианино");
+		map.put(Material.IRON_BLOCK, "Железный ксилофон");
+		map.put(Material.SOUL_SAND, "Коровий колокольчик");
+		map.put(Material.PUMPKIN, "Диджериду");
+		map.put(Material.EMERALD_BLOCK, "Аудиочип");
+		map.put(Material.HAY_BLOCK, "Банджо");
+		map.put(Material.GLOWSTONE, "Звонкая арфа");
 		return map;
 	}
 
@@ -143,7 +152,7 @@ public class LobbyEntertainmentHandler implements Listener {
 				e.setCancelled(true);
 			}
 			if(e.getAction() == Action.RIGHT_CLICK_BLOCK && block.getType() == Material.NOTE_BLOCK && e.getHand() == EquipmentSlot.HAND && p.isSneaking()) {
-				Inventory inv = Bukkit.createInventory(p, 9, ChatColor.GOLD + "Выбери инструмент");
+				Inventory inv = Bukkit.createInventory(p, 18, ChatColor.GOLD + "Выбери инструмент");
 				inv.addItem(noteBlockInstruments.keySet().stream().map(type -> ItemUtils.setName(new ItemStack(type), ChatColor.LIGHT_PURPLE + noteBlockInstruments.get(type)))
 						.toArray(ItemStack[]::new));
 				p.openInventory(inv);
@@ -178,6 +187,32 @@ public class LobbyEntertainmentHandler implements Listener {
 		}
 	}
 
+	private ItemStack getRandomFirework() {
+		ItemStack item = new ItemStack(Material.FIREWORK_ROCKET);
+		FireworkMeta meta = (FireworkMeta) item.getItemMeta();
+		meta.setPower(MathUtils.randomRange(1, 3));
+		int effects = MathUtils.randomRange(1, 3);
+		for(int i = 0; i < effects; i++) {
+			FireworkEffect.Builder builder = FireworkEffect.builder();
+			builder.flicker(MathUtils.chance(30));
+			builder.trail(MathUtils.chance(30));
+			builder.with(MathUtils.choose(FireworkEffect.Type.values()));
+			int colorsBase = MathUtils.randomRange(1, 3);
+			int colorsFade = MathUtils.randomRange(1, 3);
+			Color[] availableColors = new Color[] {Color.RED, Color.BLUE, Color.GREEN, Color.BLACK, Color.WHITE, Color.AQUA, Color.YELLOW, Color.FUCHSIA, Color.LIME,
+					Color.ORANGE, Color.PURPLE, Color.TEAL, Color.NAVY, Color.OLIVE};
+			for(int j = 0; j < colorsBase; j++) {
+				builder.withColor(MathUtils.choose(availableColors));
+			}
+			for(int j = 0; j < colorsFade; j++) {
+				builder.withFade(MathUtils.choose(availableColors));
+			}
+			meta.addEffect(builder.build());
+		}
+		item.setItemMeta(meta);
+		return item;
+	}
+
 	@EventHandler
 	public void tp(PlayerTeleportEvent e) {
 		Player p = e.getPlayer();
@@ -208,6 +243,11 @@ public class LobbyEntertainmentHandler implements Listener {
 			if(item.getType() == Material.CLOCK) {
 				Rotation rot = frame.getRotation();
 				frame.getWorld().setTime((rot.ordinal() + 3) * 3000);
+			} else if(item.getType() == Material.FIREWORK_ROCKET) {
+				PlayerInventory inv = p.getInventory();
+				if(Stream.of(inv.getContents()).filter(Objects::nonNull).mapToInt(ItemStack::getAmount).sum() < 9) {
+					p.getInventory().addItem(getRandomFirework());
+				}
 			} else {
 				if(p.getGameMode() != GameMode.CREATIVE) {
 					e.setCancelled(true);
