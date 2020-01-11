@@ -17,14 +17,12 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 
 public class DualQuest implements Listener {
 
-	public static EffectManager effectManager;
 
 	private DualQuest() {
 	}
 
 	public static void init() {
 		Bukkit.getPluginManager().registerEvents(new DualQuest(), Plugin.INSTANCE);
-		Bukkit.getPluginManager().registerEvents(new LobbyEntertainmentHandler(), Plugin.INSTANCE);
 		WorldManager.init();
 		TaskManager.init();
 		LobbyParkourHandler.init();

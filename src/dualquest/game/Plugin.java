@@ -1,10 +1,12 @@
 package dualquest.game;
 
+import de.slikey.effectlib.EffectManager;
 import dualquest.command.CommandGM;
 import dualquest.command.CommandPing;
 import dualquest.command.CommandTest;
 import dualquest.game.logic.DualQuest;
 import dualquest.game.logic.GameState;
+import dualquest.util.ParticleUtils;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Plugin extends JavaPlugin {
@@ -19,11 +21,12 @@ public class Plugin extends JavaPlugin {
 		getCommand("test").setExecutor(new CommandTest());
 
 		DualQuest.init();
+		ParticleUtils.effectManager = new EffectManager(this);
 	}
 
 	public void onDisable() {
 		if(GameState.isPlaying()) DualQuest.endGame();
-		DualQuest.effectManager.dispose();
+		ParticleUtils.effectManager.dispose();
 	}
 
 }

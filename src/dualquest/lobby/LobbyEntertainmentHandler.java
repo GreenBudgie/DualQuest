@@ -1,21 +1,15 @@
 package dualquest.lobby;
 
-import dualquest.game.logic.DualQuest;
 import dualquest.game.Plugin;
 import dualquest.game.player.PlayerHandler;
 import dualquest.util.ItemUtils;
 import dualquest.util.MathUtils;
-import dualquest.util.TaskManager;
+import dualquest.util.ParticleUtils;
 import dualquest.util.WorldUtils;
-import net.minecraft.server.v1_15_R1.BlockPosition;
-import net.minecraft.server.v1_15_R1.TileEntityJukeBox;
-import net.minecraft.server.v1_15_R1.WorldServer;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Jukebox;
 import org.bukkit.block.data.type.NoteBlock;
-import org.bukkit.craftbukkit.v1_15_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_15_R1.block.CraftJukebox;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
@@ -104,19 +98,11 @@ public class LobbyEntertainmentHandler implements Listener {
 			if(e.getView().getTitle().equalsIgnoreCase(ChatColor.YELLOW + "Выбери музон")) {
 				Jukebox jukebox = lastUsedJukebox.get(p);
 				if(item != null && item.getType() != Material.AIR) {
-					if(item.getType() == Material.BARRIER && jukebox.isPlaying()) {
-						CraftJukebox box = (CraftJukebox) jukebox;
-						WorldServer w = ((CraftWorld) box.getWorld()).getHandle();
-						BlockPosition pos = box.getPosition();
-						TileEntityJukeBox tileentity = (TileEntityJukeBox) w.getTileEntity(pos);
-						w.triggerEffect(1010, pos, 0);
-						tileentity.clear();
-						p.closeInventory();
-					} else if(item.getType().isRecord()) {
-						jukebox.setRecord(item);
-						TaskManager.invokeLater(jukebox::update);
-						p.closeInventory();
-					}
+					jukebox.setRecord(item);
+					jukebox.setPlaying(item.getType());
+					jukebox.update();
+					ParticleUtils.createParticle(jukebox.getLocation().clone().add(0.5, 1.2, 0.5), Particle.NOTE, null);
+					p.closeInventory();
 				}
 				e.setCancelled(true);
 			}
@@ -142,11 +128,18 @@ public class LobbyEntertainmentHandler implements Listener {
 			}
 			if(e.getAction() == Action.RIGHT_CLICK_BLOCK && block.getType() == Material.JUKEBOX && e.getHand() == EquipmentSlot.HAND) {
 				Jukebox jukebox = (Jukebox) e.getClickedBlock().getState();
-				lastUsedJukebox.put(p, jukebox);
-				Inventory inv = Bukkit.createInventory(p, 18, ChatColor.YELLOW + "Выбери музон");
-				inv.addItem(Stream.of(Material.values()).filter(Material::isRecord).map(ItemStack::new).toArray(ItemStack[]::new));
-				inv.setItem(17, new ItemUtils.Builder(Material.BARRIER).withName(ChatColor.RED + "Вырубить").build());
-				p.openInventory(inv);
+				if(jukebox.isPlaying()) {
+					ParticleUtils.createParticle(jukebox.getLocation().clone().add(0.5, 1.2, 0.5), Particle.SMOKE_LARGE, null);
+					jukebox.getWorld().playSound(jukebox.getLocation(), Sound.ENTITY_ARMOR_STAND_BREAK, 0.5F, 0.5F);
+					jukebox.setPlaying(null);
+					jukebox.setRecord(null);
+					jukebox.update();
+				} else {
+					lastUsedJukebox.put(p, jukebox);
+					Inventory inv = Bukkit.createInventory(p, 18, ChatColor.YELLOW + "Выбери музон");
+					inv.addItem(Stream.of(Material.values()).filter(Material::isRecord).map(ItemStack::new).toArray(ItemStack[]::new));
+					p.openInventory(inv);
+				}
 				e.setCancelled(true);
 			}
 			if(e.getAction() == Action.RIGHT_CLICK_BLOCK && block.getType() == Material.NOTE_BLOCK && e.getHand() == EquipmentSlot.HAND && p.isSneaking()) {
@@ -157,7 +150,8 @@ public class LobbyEntertainmentHandler implements Listener {
 				lastUsedNoteBlock.put(p, e.getClickedBlock().getLocation().clone().add(0, -1, 0));
 				e.setCancelled(true);
 			}
-			if(e.getAction() == Action.LEFT_CLICK_BLOCK && block.getType() == Material.NOTE_BLOCK && e.getHand() == EquipmentSlot.HAND && p.getGameMode() == GameMode.ADVENTURE) {
+			if(e.getAction() == Action.LEFT_CLICK_BLOCK && block.getType() == Material.NOTE_BLOCK && e.getHand() == EquipmentSlot.HAND
+					&& p.getGameMode() == GameMode.ADVENTURE) {
 				NoteBlock note = (NoteBlock) block.getBlockData();
 				p.playNote(block.getLocation(), note.getInstrument(), note.getNote());
 			}
@@ -174,6 +168,11 @@ public class LobbyEntertainmentHandler implements Listener {
 			if(e.getAction() == Action.RIGHT_CLICK_BLOCK && block.getType() == Material.OAK_BUTTON && e.getHand() == EquipmentSlot.HAND) {
 				p.getWorld().playSound(p.getLocation(), Sound.ITEM_CHORUS_FRUIT_TELEPORT, 1F, 1.5F);
 				p.teleport(new Location(p.getWorld(), 7.5, 165, 16.5));
+				p.getWorld().playSound(p.getLocation(), Sound.ITEM_CHORUS_FRUIT_TELEPORT, 1F, 1.5F);
+			}
+			if(e.getAction() == Action.RIGHT_CLICK_BLOCK && block.getType() == Material.DARK_OAK_BUTTON && e.getHand() == EquipmentSlot.HAND) {
+				p.getWorld().playSound(p.getLocation(), Sound.ITEM_CHORUS_FRUIT_TELEPORT, 1F, 1.5F);
+				p.teleport(new Location(p.getWorld(), -15.5, 63, 54));
 				p.getWorld().playSound(p.getLocation(), Sound.ITEM_CHORUS_FRUIT_TELEPORT, 1F, 1.5F);
 			}
 		}
