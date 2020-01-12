@@ -17,14 +17,15 @@ public class SignStart extends LobbySign {
 
 	@Override
 	public void updateText() {
-		Sign block = getSign();
+		Sign sign = getSign();
 		clearText();
 		if(GameState.isPlaying()) {
-			block.setLine(1, ChatColor.DARK_BLUE + "Игра идет...");
-			block.setLine(2, ChatColor.DARK_AQUA + "<Наблюдать>");
+			sign.setLine(1, ChatColor.DARK_BLUE + "Игра идет...");
+			sign.setLine(2, ChatColor.DARK_AQUA + "<Наблюдать>");
 		} else {
-			block.setLine(1, (WorldManager.hasWorld() ? ChatColor.DARK_GREEN : ChatColor.DARK_GRAY) + "Начать игру");
+			sign.setLine(1, (WorldManager.hasWorld() ? ChatColor.DARK_GREEN : ChatColor.DARK_GRAY) + "Начать игру");
 		}
+		sign.update();
 	}
 
 	@Override

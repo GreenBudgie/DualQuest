@@ -22,6 +22,7 @@ public class SignWorld extends LobbySign {
 			sign.setLine(1, ChatColor.DARK_RED + "Мир не создан");
 			sign.setLine(2, ChatColor.DARK_BLUE + "<Сгенерировать>");
 		}
+		sign.update();
 	}
 
 	@Override

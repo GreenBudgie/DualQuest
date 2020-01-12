@@ -1,6 +1,7 @@
 package dualquest.game;
 
 import de.slikey.effectlib.EffectManager;
+import dualquest.command.CommandDualQuest;
 import dualquest.command.CommandGM;
 import dualquest.command.CommandPing;
 import dualquest.command.CommandTest;
@@ -19,6 +20,7 @@ public class Plugin extends JavaPlugin {
 		getCommand("gm").setExecutor(new CommandGM());
 		getCommand("ping").setExecutor(new CommandPing());
 		getCommand("test").setExecutor(new CommandTest());
+		getCommand("dualquest").setExecutor(new CommandDualQuest());
 
 		DualQuest.init();
 		ParticleUtils.effectManager = new EffectManager(this);

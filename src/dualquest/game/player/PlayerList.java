@@ -38,6 +38,14 @@ public class PlayerList implements Iterable<DQPlayer> {
 		}
 	}
 
+	public static PlayerList empty() {
+		return new PlayerList(new ArrayList<>());
+	}
+
+	public boolean isEmpty() {
+		return players.isEmpty();
+	}
+
 	public Selector selector() {
 		return new Selector(players);
 	}

@@ -50,13 +50,6 @@ public class WorldManager {
 			gameWorld.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
 			gameWorld.setPVP(false);
 			gameWorld.setTime(0);
-			WorldBorder border = gameWorld.getWorldBorder();
-			border.setSize(getRelativeWorldSize());
-			border.setWarningTime(0);
-			border.setWarningDistance(0);
-			border.setDamageBuffer(0);
-			border.setDamageAmount(0);
-			border.setCenter(spawnLocation);
 
 			double angle = MathUtils.randomRangeDouble(0, Math.PI * 2);
 			int x = (int) (distanceBetweenTeams / 2 * Math.cos(angle));
@@ -68,6 +61,14 @@ public class WorldManager {
 			spectatorsSpawn = spawnLocation.clone().add(0, 10, 0);
 			questersSpawn = spawnLocation.clone().add(x, 10, z);
 			attackersSpawn = spawnLocation.clone().add(ax, 10, az);
+
+			WorldBorder border = gameWorld.getWorldBorder();
+			border.setSize(getRelativeWorldSize());
+			border.setWarningTime(0);
+			border.setWarningDistance(0);
+			border.setDamageBuffer(0);
+			border.setDamageAmount(0);
+			border.setCenter(spawnLocation);
 
 			bar.setTitle(ChatColor.YELLOW + "" + ChatColor.BOLD + "Миры созданы!");
 			bar.setColor(BarColor.GREEN);

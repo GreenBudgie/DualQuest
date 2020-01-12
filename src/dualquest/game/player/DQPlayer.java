@@ -40,6 +40,7 @@ public class DQPlayer {
 	 */
 	@Nullable
 	public static DQPlayer fromPlayer(Player p) {
+		if(PlayerHandler.getPlayerList().isEmpty()) return null;
 		return PlayerHandler.getPlayerList().getDQPlayers().stream().filter(dqp -> dqp.isOnServer() && dqp.getPlayerName().equals(p.getName())).findFirst().orElse(null);
 	}
 

@@ -23,11 +23,11 @@ import java.util.stream.Collectors;
  */
 public class PlayerHandler implements Listener {
 
-	private static PlayerList playerList;
+	private static PlayerList playerList = PlayerList.empty();
 	private static List<Player> spectators = new ArrayList<>();
 
 	public static PlayerList getPlayerList() {
-		return playerList;
+		return playerList == null ? PlayerList.empty() : playerList;
 	}
 
 	public static void initPlayerList(Collection<? extends Player> players) {

@@ -12,3 +12,7 @@ commands:
   test:
     description: Test command, debug
     usage: /test
+  dualquest:
+    description: Dualquest (op) commands
+    usage: /dualquest
+    aliases: dq

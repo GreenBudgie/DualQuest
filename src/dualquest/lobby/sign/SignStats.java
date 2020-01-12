@@ -1,10 +1,7 @@
 package dualquest.lobby.sign;
 
-import dualquest.game.logic.DualQuest;
 import dualquest.game.logic.GameState;
 import dualquest.game.logic.Rating;
-import dualquest.game.logic.WorldManager;
-import dualquest.game.player.PlayerHandler;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
@@ -20,6 +17,7 @@ public class SignStats extends LobbySign {
 		Sign sign = getSign();
 		sign.setLine(1, ChatColor.DARK_BLUE + "Рейтинг:");
 		sign.setLine(2, Rating.statsEnabled ? (ChatColor.DARK_GREEN + "Включен") : (ChatColor.DARK_RED + "Отключен"));
+		sign.update();
 	}
 
 	@Override

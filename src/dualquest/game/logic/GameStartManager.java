@@ -18,7 +18,13 @@ public class GameStartManager {
 	private static Set<Location> playerSpawns = new HashSet<>();
 	private static int votesRequired;
 
-	public static void startGame() {
+	public enum Option {
+
+		FAST, ONLY_ATTACKERS, ONLY_QUESTERS
+
+	}
+
+	public static void startGame(Option... options) {
 		if(GameState.isPlaying()) throw new IllegalStateException("Cannot start the game at the current moment! It's already running");
 		if(!WorldManager.hasWorld()) throw new IllegalStateException("Cannot start without the generated world!");
 

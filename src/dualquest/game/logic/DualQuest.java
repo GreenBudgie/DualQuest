@@ -27,6 +27,7 @@ public class DualQuest implements Listener {
 		LobbyParkourHandler.init();
 		LobbyEntertainmentHandler.init();
 		LobbySignManager.init();
+		ScoreboardHandler.createLobbyScoreboard();
 	}
 
 	public static String getLogo() {

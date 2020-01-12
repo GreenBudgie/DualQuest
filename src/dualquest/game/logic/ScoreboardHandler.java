@@ -9,6 +9,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
+import java.util.Set;
+
 public class ScoreboardHandler {
 
 	private static Scoreboard lobbyScoreboard;
@@ -37,10 +39,7 @@ public class ScoreboardHandler {
 			Team questersTeam = gameScoreboard.getTeam("QuestersTeam");
 			Team attackersTeam = gameScoreboard.getTeam("AttackersTeam");
 			Team spectatorsTeam = gameScoreboard.getTeam("SpectatorsTeam");
-			lobbyTeam.getEntries().clear();
-			questersTeam.getEntries().clear();
-			attackersTeam.getEntries().clear();
-			spectatorsTeam.getEntries().clear();
+			removeEntriesFromTeams(lobbyTeam, questersTeam, attackersTeam, spectatorsTeam);
 			for(Player currentPlayer : Bukkit.getOnlinePlayers()) {
 				if(PlayerHandler.isInLobby(currentPlayer)) {
 					lobbyTeam.addEntry(currentPlayer.getName());
@@ -67,7 +66,7 @@ public class ScoreboardHandler {
 
 	}
 
-	public static void createLobbyScoreboard(Player player) {
+	public static void createLobbyScoreboard() {
 		Scoreboard lobbyScoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
 		Team lobbyTeam = lobbyScoreboard.registerNewTeam("LobbyTeam");
 		Team gameTeam = lobbyScoreboard.registerNewTeam("GameTeam");
@@ -75,22 +74,33 @@ public class ScoreboardHandler {
 		lobbyTeam.setCanSeeFriendlyInvisibles(true);
 		lobbyTeam.setColor(ChatColor.GOLD);
 		gameTeam.setColor(ChatColor.DARK_AQUA);
-		updateLobbyTeams();
-		player.setScoreboard(lobbyScoreboard);
 		ScoreboardHandler.lobbyScoreboard = lobbyScoreboard;
+		for(Player player : PlayerHandler.getLobbyPlayers()) {
+			player.setScoreboard(lobbyScoreboard);
+		}
+		updateLobbyTeams();
 	}
 
 	public static void updateLobbyTeams() {
+		if(lobbyScoreboard == null) return;
 		Team lobbyTeam = lobbyScoreboard.getTeam("LobbyTeam");
 		Team gameTeam = lobbyScoreboard.getTeam("GameTeam");
-		lobbyTeam.getEntries().clear();
-		gameTeam.getEntries().clear();
+		removeEntriesFromTeams(lobbyTeam, gameTeam);
 		for(Player player : Bukkit.getOnlinePlayers()) {
 			if(PlayerHandler.isInLobby(player)) {
 				lobbyTeam.addEntry(player.getName());
 			}
 			if(PlayerHandler.isInGame(player)) {
 				gameTeam.addEntry(player.getName());
+			}
+		}
+	}
+
+	private static void removeEntriesFromTeams(Team... teams) {
+		for(Team team : teams) {
+			Set<String> entries = team.getEntries();
+			for(String entry : entries) {
+				team.removeEntry(entry);
 			}
 		}
 	}
