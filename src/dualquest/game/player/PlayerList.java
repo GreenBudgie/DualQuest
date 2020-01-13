@@ -81,6 +81,10 @@ public class PlayerList implements Iterable<DQPlayer> {
 			selected = Lists.newArrayList(input);
 		}
 
+		public int count() {
+			return selected.size();
+		}
+
 		public Selector online() {
 			selected.removeIf(player -> !player.isOnServer());
 			return this;

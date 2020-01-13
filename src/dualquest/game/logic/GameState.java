@@ -10,7 +10,15 @@ public enum GameState {
 		setState(this);
 	}
 
+	public void set(int timeToNextPhase) {
+		setState(this, timeToNextPhase);
+	}
+
 	private static GameState currentState = STOPPED;
+
+	public static GameState getState() {
+		return currentState;
+	}
 
 	public static boolean isState(GameState gameState) {
 		return currentState == gameState;
@@ -26,6 +34,11 @@ public enum GameState {
 
 	public static void setState(GameState newState) {
 		currentState = newState;
+	}
+
+	public static void setState(GameState newState, int timeToNextPhase) {
+		currentState = newState;
+		GameProcess.setTimeToNextPhase(timeToNextPhase);
 	}
 
 	public static boolean isPreGame() {

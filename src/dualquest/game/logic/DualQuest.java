@@ -16,12 +16,12 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 
 public class DualQuest implements Listener {
 
-	private DualQuest() {
-	}
+	private static int endingTimer;
 
 	public static void init() {
 		Bukkit.getPluginManager().registerEvents(new DualQuest(), Plugin.INSTANCE);
 		Bukkit.getPluginManager().registerEvents(new PlayerHandler(), Plugin.INSTANCE);
+		Bukkit.getPluginManager().registerEvents(new GameStartManager(), Plugin.INSTANCE);
 		WorldManager.init();
 		TaskManager.init();
 		LobbyParkourHandler.init();
@@ -34,24 +34,9 @@ public class DualQuest implements Listener {
 		return ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Dual" + ChatColor.RESET + ChatColor.GREEN + "Quest";
 	}
 
-	public static void endGame() {
-		if(!GameState.isPlaying()) throw new IllegalStateException("Cannot end the game at the current moment! It isn't running");
-		if(GameState.isPreGame()) {
-			GameStartManager.removeGlassPlatforms();
-		}
-		for(Player player : PlayerHandler.getInGamePlayers()) {
-			PlayerHandler.reset(player);
-			player.teleport(WorldManager.getLobby().getSpawnLocation());
-		}
-		PlayerHandler.getSpectators().clear();
-		WorldManager.deleteWorld();
-		GameState.STOPPED.set();
-	}
-
-	@EventHandler
-	public void preventPhantomSpawn(CreatureSpawnEvent e) {
-		if(e.getEntityType() == EntityType.PHANTOM) {
-			e.setCancelled(true);
+	public static void update() {
+		if(GameState.isPlaying() && TaskManager.isSecUpdated()) {
+			GameProcess.update();
 		}
 	}
 

@@ -104,7 +104,7 @@ public class PlayerHandler implements Listener {
 		if(dqPlayer == null) {
 			reset(player);
 			player.teleport(WorldManager.getLobby().getSpawnLocation());
-			Broadcaster.inWorld(WorldManager.getLobby()).toChat(ChatColor.GOLD + player.getName() + ChatColor.YELLOW + " присоединился");
+			Broadcaster.inWorld(WorldManager.getLobby()).and(player).toChat(ChatColor.GOLD + player.getName() + ChatColor.YELLOW + " присоединился");
 		} else {
 			dqPlayer.rejoin(player);
 		}
@@ -113,6 +113,7 @@ public class PlayerHandler implements Listener {
 
 	@EventHandler
 	public void leave(PlayerQuitEvent e) {
+		e.setQuitMessage(null);
 		Player player = e.getPlayer();
 		if(isSpectator(player)) {
 			reset(player);

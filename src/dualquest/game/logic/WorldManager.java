@@ -2,6 +2,7 @@ package dualquest.game.logic;
 
 import dualquest.game.player.PlayerHandler;
 import dualquest.lobby.sign.LobbySignManager;
+import dualquest.util.Broadcaster;
 import dualquest.util.EntityUtils;
 import dualquest.util.MathUtils;
 import dualquest.util.TaskManager;
@@ -30,6 +31,10 @@ public class WorldManager {
 		lobby.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
 		lobby.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
 		lobby.setGameRule(GameRule.DO_MOB_SPAWNING, false);
+
+		if(Bukkit.getWorld("GameWorld") != null) {
+			gameWorld = Bukkit.getWorld("GameWorld");
+		}
 	}
 
 	public static void makeWorld() {
@@ -41,6 +46,7 @@ public class WorldManager {
 			bar.setVisible(true);
 			Bukkit.getOnlinePlayers()
 					.forEach(player -> EntityUtils.sendActionBarInfo(player, ChatColor.GOLD + "" + ChatColor.BOLD + "Генерируется мир. Сервер зависнет на это время."));
+			Broadcaster.everybody().sound(Sound.BLOCK_BEACON_DEACTIVATE, 0.5F, 0.5F);
 
 			gameWorld = Bukkit.createWorld(new WorldCreator("GameWorld"));
 			gameWorld.setDifficulty(Difficulty.HARD);
@@ -70,12 +76,13 @@ public class WorldManager {
 			border.setDamageAmount(0);
 			border.setCenter(spawnLocation);
 
-			bar.setTitle(ChatColor.YELLOW + "" + ChatColor.BOLD + "Миры созданы!");
+			bar.setTitle(ChatColor.YELLOW + "" + ChatColor.BOLD + "Мир создан!");
 			bar.setColor(BarColor.GREEN);
 			TaskManager.asyncInvokeLater(() -> {
 				bar.setVisible(false);
 				generating = false;
 			}, 40);
+			Broadcaster.everybody().sound(Sound.BLOCK_BEACON_ACTIVATE, 0.5F, 2F);
 			LobbySignManager.updateSigns();
 		}
 	}

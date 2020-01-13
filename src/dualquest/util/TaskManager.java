@@ -18,6 +18,7 @@ public class TaskManager {
 	public static void init() {
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(Plugin.INSTANCE, () -> {
 
+
 			if(tick < 19) {
 				tick++;
 				fullTicks++;
