@@ -1,6 +1,7 @@
 package dualquest.game.logic;
 
 import dualquest.game.player.PlayerHandler;
+import dualquest.game.player.PlayerTeam;
 import dualquest.lobby.sign.LobbySignManager;
 import dualquest.util.Broadcaster;
 import dualquest.util.EntityUtils;
@@ -89,13 +90,15 @@ public class WorldManager {
 
 		spawnLocation = gameWorld.getSpawnLocation().clone();
 		spectatorsSpawn = spawnLocation.clone().add(0, 10, 0);
-		questersSpawn = spawnLocation.clone().add(x, 10, z);
-		attackersSpawn = spawnLocation.clone().add(ax, 10, az);
+		questersSpawn = spawnLocation.clone().add(x, 0, z);
+		questersSpawn.setY(gameWorld.getHighestBlockYAt(questersSpawn));
+		attackersSpawn = spawnLocation.clone().add(ax, 0, az);
+		attackersSpawn.setY(gameWorld.getHighestBlockYAt(attackersSpawn));
 
 	}
 
 	public static void deleteWorld() {
-		if(hasWorld() && !keepMap) {
+		if(hasWorld()) {
 			deleteWorld(gameWorld);
 			gameWorld = null;
 		}
@@ -161,6 +164,10 @@ public class WorldManager {
 
 	public static World getGameWorld() {
 		return gameWorld;
+	}
+
+	public static Location getSpawn(PlayerTeam team) {
+		return team == PlayerTeam.QUESTERS ? questersSpawn : attackersSpawn;
 	}
 
 	public static boolean hasWorld() {

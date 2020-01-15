@@ -31,7 +31,7 @@ public class DualQuest implements Listener {
 	}
 
 	public static String getLogo() {
-		return ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Dual" + ChatColor.RESET + ChatColor.GREEN + "Quest";
+		return ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Dual" + ChatColor.RESET + ChatColor.GREEN + "Quest" + ChatColor.RESET;
 	}
 
 	public static void update() {

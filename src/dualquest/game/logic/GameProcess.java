@@ -1,11 +1,14 @@
 package dualquest.game.logic;
 
 import dualquest.game.player.PlayerHandler;
+import dualquest.game.player.PlayerTeam;
 import dualquest.lobby.sign.LobbySignManager;
 import dualquest.util.Broadcaster;
 import dualquest.util.TaskManager;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
+import org.bukkit.Sound;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -29,6 +32,38 @@ public class GameProcess implements Listener {
 			}
 			break;
 		case PREPARING:
+			if(timeToNextPhase == 20) {
+				Broadcaster.inWorld(WorldManager.getGameWorld()).title(DualQuest.getLogo(), null, 30, 70, 20).sound(Sound.BLOCK_BEACON_POWER_SELECT, 0.4F, 0.8F);
+			}
+			if(timeToNextPhase == 14) {
+				for(Player player : PlayerHandler.getPlayerList().getPlayers()) {
+					player.sendTitle(ChatColor.LIGHT_PURPLE + " оманда " + PlayerTeam.getTeam(player).getCases().getGenitive(), null, 8, 80, 30);
+					player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8F, 1F);
+
+					player.sendMessage(
+							StringUtils.repeat(ChatColor.DARK_GRAY + "-", 10) + " " + DualQuest.getLogo() + " " + StringUtils.repeat(ChatColor.DARK_GRAY + "-", 10));
+					player.sendMessage("");
+					if(PlayerTeam.getTeam(player) == PlayerTeam.QUESTERS) {
+						player.sendMessage(ChatColor.GOLD
+								+ "“во€ задача - выполнить квест за определенное врем€. ќстерегайс€ противоположной команды - они будут пытатьс€ помешать выполнению квеста. –еспавнитьс€ ты не можешь, а они - могут.");
+						player.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "”дачи!");
+					} else {
+						player.sendMessage(ChatColor.GOLD
+								+ "“во€ задача - любыми способами не дать противоположной команде выполнить квест. ћожно либо убить всю команду, либо просто мешать им, чтобы они не успели выполнить квест. “ы можешь респавнитьс€, они - не могут.");
+						player.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "”дачи!");
+					}
+					player.sendMessage("");
+					player.sendMessage(StringUtils.repeat(ChatColor.DARK_GRAY + "-", 30));
+				}
+			}
+			if(timeToNextPhase <= 3 && timeToNextPhase > 0) {
+				Broadcaster.inWorld(WorldManager.getGameWorld()).title(ChatColor.DARK_AQUA + "" + ChatColor.BOLD + timeToNextPhase, "", 0, 100, 0)
+						.sound(Sound.BLOCK_COMPARATOR_CLICK, 0.5F, timeToNextPhase == 3 ? 1.2F : (timeToNextPhase == 2 ? 1F : 0.8F));
+			}
+			actionBar = ChatColor.YELLOW + "ѕодготовка: " + ChatColor.AQUA + TaskManager.formatTime(timeToNextPhase);
+			if(timeToNextPhase <= 0) {
+				GameStartManager.endPreparing();
+			}
 			break;
 		case GAME:
 			break;
@@ -46,12 +81,12 @@ public class GameProcess implements Listener {
 		}
 	}
 
-	public static void setTimeToNextPhase(int timeInSeconds) {
-		timeToNextPhase = timeInSeconds;
-	}
-
 	public static int getTimeToNextPhase() {
 		return timeToNextPhase;
+	}
+
+	public static void setTimeToNextPhase(int timeInSeconds) {
+		timeToNextPhase = timeInSeconds;
 	}
 
 	public static void endGame() {
@@ -64,9 +99,13 @@ public class GameProcess implements Listener {
 			PlayerHandler.reset(player);
 			player.teleport(WorldManager.getLobby().getSpawnLocation());
 			player.setGameMode(GameMode.SURVIVAL);
+			ScoreboardHandler.updateScoreboardTeamsLater();
 		}
+		GameStartManager.removeInfoStands();
 		PlayerHandler.getSpectators().clear();
-		WorldManager.deleteWorld();
+		if(!WorldManager.keepMap) {
+			WorldManager.deleteWorld();
+		}
 		GameState.STOPPED.set();
 		LobbySignManager.updateSigns();
 	}

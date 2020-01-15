@@ -33,6 +33,7 @@ public class ScoreboardHandler {
 	}
 
 	public static void updateGameTeams() {
+		if(!GameState.isPlaying()) return;
 		for(Player player : PlayerHandler.getInGamePlayers()) {
 			Scoreboard gameScoreboard = player.getScoreboard();
 			Team lobbyTeam = gameScoreboard.getTeam("LobbyTeam");
@@ -94,6 +95,10 @@ public class ScoreboardHandler {
 				gameTeam.addEntry(player.getName());
 			}
 		}
+	}
+
+	public static void updateLobbyTeamsLater() {
+		TaskManager.invokeLater(ScoreboardHandler::updateLobbyTeams);
 	}
 
 	private static void removeEntriesFromTeams(Team... teams) {
