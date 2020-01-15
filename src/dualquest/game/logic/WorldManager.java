@@ -35,6 +35,7 @@ public class WorldManager {
 
 		if(Bukkit.getWorld("GameWorld") != null) {
 			gameWorld = Bukkit.getWorld("GameWorld");
+			setupLocations();
 		}
 	}
 
@@ -58,16 +59,7 @@ public class WorldManager {
 			gameWorld.setPVP(false);
 			gameWorld.setTime(0);
 
-			double angle = MathUtils.randomRangeDouble(0, Math.PI * 2);
-			int x = (int) (distanceBetweenTeams / 2 * Math.cos(angle));
-			int z = (int) (distanceBetweenTeams / 2 * Math.sin(angle));
-			int ax = (int) (distanceBetweenTeams / 2 * Math.cos(angle + Math.PI));
-			int az = (int) (distanceBetweenTeams / 2 * Math.sin(angle + Math.PI));
-
-			spawnLocation = gameWorld.getSpawnLocation().clone();
-			spectatorsSpawn = spawnLocation.clone().add(0, 10, 0);
-			questersSpawn = spawnLocation.clone().add(x, 10, z);
-			attackersSpawn = spawnLocation.clone().add(ax, 10, az);
+			setupLocations();
 
 			WorldBorder border = gameWorld.getWorldBorder();
 			border.setSize(getRelativeWorldSize());
@@ -86,6 +78,20 @@ public class WorldManager {
 			Broadcaster.everybody().sound(Sound.BLOCK_BEACON_ACTIVATE, 0.5F, 2F);
 			LobbySignManager.updateSigns();
 		}
+	}
+
+	private static void setupLocations() {
+		double angle = MathUtils.randomRangeDouble(0, Math.PI * 2);
+		int x = (int) (distanceBetweenTeams / 2 * Math.cos(angle));
+		int z = (int) (distanceBetweenTeams / 2 * Math.sin(angle));
+		int ax = (int) (distanceBetweenTeams / 2 * Math.cos(angle + Math.PI));
+		int az = (int) (distanceBetweenTeams / 2 * Math.sin(angle + Math.PI));
+
+		spawnLocation = gameWorld.getSpawnLocation().clone();
+		spectatorsSpawn = spawnLocation.clone().add(0, 10, 0);
+		questersSpawn = spawnLocation.clone().add(x, 10, z);
+		attackersSpawn = spawnLocation.clone().add(ax, 10, az);
+
 	}
 
 	public static void deleteWorld() {

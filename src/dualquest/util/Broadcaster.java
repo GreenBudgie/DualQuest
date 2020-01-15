@@ -53,6 +53,16 @@ public class Broadcaster {
 		return this;
 	}
 
+	public Broadcaster except(Player... players) {
+		this.players.removeAll(Arrays.asList(players));
+		return this;
+	}
+
+	public Broadcaster except(Collection<Player> players) {
+		this.players.removeAll(players);
+		return this;
+	}
+
 	private Broadcaster(Player... players) {
 		this.players = Sets.newHashSet(players);
 	}
