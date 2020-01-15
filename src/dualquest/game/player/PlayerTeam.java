@@ -3,6 +3,8 @@ package dualquest.game.player;
 import org.bukkit.entity.Player;
 
 import javax.annotation.Nullable;
+import java.util.List;
+import java.util.function.Consumer;
 
 public enum PlayerTeam {
 
@@ -10,6 +12,11 @@ public enum PlayerTeam {
 
 	public boolean contains(Player player) {
 		return getTeam(player) == this;
+	}
+
+	public void both(Consumer<PlayerTeam> action) {
+		action.accept(QUESTERS);
+		action.accept(ATTACKERS);
 	}
 
 	@Nullable

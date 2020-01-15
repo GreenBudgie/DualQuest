@@ -22,6 +22,7 @@ public abstract class LobbySign {
 		for(int i = 0; i < 4; i++) {
 			sign.setLine(i, "");
 		}
+		sign.update();
 	}
 
 	public Location getLocation() {

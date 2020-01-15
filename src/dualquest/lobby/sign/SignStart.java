@@ -17,8 +17,8 @@ public class SignStart extends LobbySign {
 
 	@Override
 	public void updateText() {
-		Sign sign = getSign();
 		clearText();
+		Sign sign = getSign();
 		if(GameState.isPlaying()) {
 			sign.setLine(1, ChatColor.DARK_BLUE + "Игра идет...");
 			sign.setLine(2, ChatColor.DARK_AQUA + "<Наблюдать>");

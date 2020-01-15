@@ -5,6 +5,8 @@ import dualquest.game.player.DQPlayer;
 import dualquest.game.player.PlayerHandler;
 import dualquest.game.player.PlayerList;
 import dualquest.game.player.PlayerTeam;
+import dualquest.util.ItemUtils;
+import dualquest.util.MathUtils;
 import dualquest.util.ParticleUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.*;
@@ -18,11 +20,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Handles every event that happen in a pre-game, including starting the game itself
@@ -30,8 +34,7 @@ import java.util.*;
 public class GameStartManager implements Listener {
 
 	private static Set<Location> playerSpawns = new HashSet<>();
-	private static int votesQuesters, votesAttackers;
-	private static boolean mapAllowed;
+	private static Map<Player, Boolean> votes = new HashMap<>();
 	private static BossBar voteBar = Bukkit.createBossBar("", BarColor.RED, BarStyle.SOLID);
 
 	public static void startGame(Option... options) {
@@ -51,15 +54,26 @@ public class GameStartManager implements Listener {
 		teleportPlayers(playerList.selector().team(PlayerTeam.QUESTERS).selectPlayers(), questersSpawns);
 		teleportPlayers(playerList.selector().team(PlayerTeam.ATTACKERS).selectPlayers(), attackersSpawns);
 
+		voteBar.setVisible(true);
+
 		for(Player player : PlayerHandler.getInGamePlayers()) {
 			ScoreboardHandler.createGameScoreboard(player);
+			voteBar.addPlayer(player);
+			PlayerHandler.reset(player);
+			player.getInventory().setItem(3, ItemUtils.builder(Material.LIME_DYE).withName(ChatColor.GREEN + "Карта норм").build());
+			player.getInventory().setItem(5, ItemUtils.builder(Material.RED_DYE).withName(ChatColor.RED + "Карта говно").build());
+			player.setGameMode(GameMode.ADVENTURE);
 		}
 
-		votesQuesters = 0;
-		votesAttackers = 0;
-		mapAllowed = false;
+		votes.clear();
 
+		updateVoteBar();
 		GameState.VOTING.set(20);
+	}
+
+	public static void hideBar() {
+		voteBar.removeAll();
+		voteBar.setVisible(false);
 	}
 
 	private static List<Location> calculateSpawnLocationsFor(List<Player> players, Location pivot) {
@@ -124,9 +138,53 @@ public class GameStartManager implements Listener {
 		}
 	}
 
-	private static void endVoting() {
-		if(mapAllowed) {
+	private static void updateVoteBar() {
+		List<Player> votedQuesters = votes.keySet().stream().filter(PlayerTeam.QUESTERS::contains).collect(Collectors.toList());
+		int questersVotedFor = (int) votedQuesters.stream().filter(player -> votes.get(player)).count();
+		int questersVotedAgainst = votedQuesters.size() - questersVotedFor;
+		String questers = ChatColor.GREEN + "" + questersVotedFor + ChatColor.GRAY + "/" + ChatColor.RED + questersVotedAgainst + ChatColor.BLUE + " Квестеры";
 
+		List<Player> votedAttackers = votes.keySet().stream().filter(PlayerTeam.ATTACKERS::contains).collect(Collectors.toList());
+		int attackersVotedFor = (int) votedAttackers.stream().filter(player -> votes.get(player)).count();
+		int attackersVotedAgainst = votedAttackers.size() - attackersVotedFor;
+		String attackers = ChatColor.DARK_RED + "Нападающие " + ChatColor.GREEN + attackersVotedFor + ChatColor.GRAY + "/" + ChatColor.RED + attackersVotedAgainst;
+		voteBar.setTitle(questers + ChatColor.DARK_GRAY + " | " + attackers);
+
+		double progressQuesters;
+		if(questersVotedAgainst == 0) {
+			progressQuesters = 0.25;
+		} else {
+			progressQuesters = MathUtils.clamp(((double) questersVotedFor / questersVotedAgainst) / 4, 0, 0.5);
+		}
+		double progressAttackers;
+		if(attackersVotedAgainst == 0) {
+			progressAttackers = 0.25;
+		} else {
+			progressAttackers = MathUtils.clamp(((double) attackersVotedFor / attackersVotedAgainst) / 4, 0, 0.5);
+		}
+		double progress = progressQuesters + progressAttackers;
+		voteBar.setProgress(progress);
+		voteBar.setColor(progress < 0.5 ? BarColor.RED : (progress > 0.75 ? BarColor.GREEN : BarColor.YELLOW));
+	}
+
+	private static boolean teamPassedVote(PlayerTeam team) {
+		List<Player> players = votes.keySet().stream().filter(team::contains).collect(Collectors.toList());
+		int votedFor = (int) players.stream().filter(player -> votes.get(player)).count();
+		int votedAgainst = players.size() - votedFor;
+		return votedFor >= votedAgainst;
+	}
+
+	public static void endVoting() {
+		if(teamPassedVote(PlayerTeam.QUESTERS) && teamPassedVote(PlayerTeam.ATTACKERS)) {
+			for(Player player : PlayerHandler.getPlayerList().getPlayers()) {
+				Block block = player.getWorld().getHighestBlockAt(player.getLocation()).getLocation().clone().subtract(0, 1, 0).getBlock();
+				block.setType(Material.BARRIER);
+				ParticleUtils.createParticlesInside(block, Particle.SMOKE_NORMAL, null, 10);
+				player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.8F, 1F);
+				player.sendTitle(ChatColor.GREEN + "" + ChatColor.BOLD + "Карта норм!", null, 5, 50, 10);
+			}
+			hideBar();
+			GameState.PREPARING.set(20);
 		} else {
 			removeGlassPlatforms();
 			for(Player player : PlayerHandler.getPlayerList().getPlayers()) {
@@ -134,13 +192,13 @@ public class GameStartManager implements Listener {
 				player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_FALL, 1F, 0.8F);
 				player.setGameMode(GameMode.SPECTATOR);
 			}
-			GameState.ENDING.set();
+			GameState.ENDING.set(8);
 		}
 	}
 
 	private static void vote(Player player, boolean vote) {
-		ParticleUtils.createParticlesAround(player, Particle.REDSTONE, null, 20);
-		Block block = player.getWorld().getHighestBlockAt(player.getLocation());
+		ParticleUtils.createParticlesAround(player, Particle.REDSTONE, vote ? Color.GREEN : Color.RED, 20);
+		Block block = player.getWorld().getHighestBlockAt(player.getLocation()).getLocation().clone().subtract(0, 1, 0).getBlock();
 		if(block.getType() == Material.GLASS) {
 			block.setType(vote ? Material.GREEN_STAINED_GLASS : Material.RED_STAINED_GLASS);
 			if(vote) {
@@ -149,21 +207,9 @@ public class GameStartManager implements Listener {
 				player.getWorld().playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1F, 0.5F);
 			}
 		}
-		if(vote) {
-			if(PlayerTeam.QUESTERS.contains(player)) {
-				votesQuesters++;
-			}
-			if(PlayerTeam.ATTACKERS.contains(player)) {
-				votesAttackers++;
-			}
-		}
-		int questersCount = PlayerHandler.getPlayerList().selector().team(PlayerTeam.QUESTERS).count();
-		int attackersCount = PlayerHandler.getPlayerList().selector().team(PlayerTeam.ATTACKERS).count();
-		boolean questersPassed = votesQuesters >= questersCount / 2.0;
-		boolean attackersPassed = votesAttackers >= attackersCount / 2.0;
-		if(questersPassed && attackersPassed) {
-			mapAllowed = true;
-		}
+		player.getInventory().clear();
+		votes.put(player, vote);
+		updateVoteBar();
 	}
 
 	@EventHandler
@@ -186,6 +232,14 @@ public class GameStartManager implements Listener {
 
 	@EventHandler
 	public void preventPlacing(BlockPlaceEvent e) {
+		Player player = e.getPlayer();
+		if(GameState.isPreGame() && PlayerHandler.isPlaying(player)) {
+			e.setCancelled(true);
+		}
+	}
+
+	@EventHandler
+	public void preventDropping(PlayerDropItemEvent e) {
 		Player player = e.getPlayer();
 		if(GameState.isPreGame() && PlayerHandler.isPlaying(player)) {
 			e.setCancelled(true);

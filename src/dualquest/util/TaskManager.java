@@ -1,6 +1,7 @@
 package dualquest.util;
 
 import dualquest.game.Plugin;
+import dualquest.game.logic.DualQuest;
 import org.bukkit.Bukkit;
 
 import java.text.SimpleDateFormat;
@@ -18,7 +19,7 @@ public class TaskManager {
 	public static void init() {
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(Plugin.INSTANCE, () -> {
 
-
+			DualQuest.update();
 			if(tick < 19) {
 				tick++;
 				fullTicks++;

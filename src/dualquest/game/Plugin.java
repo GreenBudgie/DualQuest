@@ -6,6 +6,7 @@ import dualquest.command.CommandGM;
 import dualquest.command.CommandPing;
 import dualquest.command.CommandTest;
 import dualquest.game.logic.DualQuest;
+import dualquest.game.logic.GameProcess;
 import dualquest.game.logic.GameState;
 import dualquest.util.ParticleUtils;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -27,7 +28,7 @@ public class Plugin extends JavaPlugin {
 	}
 
 	public void onDisable() {
-		if(GameState.isPlaying()) DualQuest.endGame();
+		if(GameState.isPlaying()) GameProcess.endGame();
 		ParticleUtils.effectManager.dispose();
 	}
 

@@ -22,6 +22,7 @@ public class WorldManager {
 	private static Location spectatorsSpawn;
 	private static Location questersSpawn;
 	private static Location spawnLocation;
+	public static boolean keepMap = true; //FIXME Remove on release
 
 	public static void init() {
 		lobby = Bukkit.getWorld("DualQuestLobby");
@@ -88,7 +89,7 @@ public class WorldManager {
 	}
 
 	public static void deleteWorld() {
-		if(hasWorld()) {
+		if(hasWorld() && !keepMap) {
 			deleteWorld(gameWorld);
 			gameWorld = null;
 		}
