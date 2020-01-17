@@ -2,6 +2,7 @@ package dualquest.game.logic;
 
 import dualquest.game.player.PlayerHandler;
 import dualquest.game.player.PlayerTeam;
+import dualquest.game.quest.Quest;
 import dualquest.lobby.sign.LobbySignManager;
 import dualquest.util.Broadcaster;
 import dualquest.util.TaskManager;

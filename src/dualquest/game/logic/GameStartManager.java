@@ -56,8 +56,8 @@ public class GameStartManager implements Listener {
 		playerSpawns.addAll(questersSpawns);
 		playerSpawns.addAll(attackersSpawns);
 		createGlassPlatforms();
-		teleportPlayers(playerList.selector().team(PlayerTeam.QUESTERS).selectPlayers(), questersSpawns);
-		teleportPlayers(playerList.selector().team(PlayerTeam.ATTACKERS).selectPlayers(), attackersSpawns);
+		teleportPlayers(playerList.selector().valid().team(PlayerTeam.QUESTERS).selectPlayers(), questersSpawns);
+		teleportPlayers(playerList.selector().valid().team(PlayerTeam.ATTACKERS).selectPlayers(), attackersSpawns);
 
 		for(Player player : PlayerHandler.getInGamePlayers()) {
 			LobbyParkourHandler.stopPassing(player);

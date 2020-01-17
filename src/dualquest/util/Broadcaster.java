@@ -77,6 +77,13 @@ public class Broadcaster {
 		return this;
 	}
 
+	public Broadcaster toChat(Collection<String> messages) {
+		for(String message : messages) {
+			players.forEach(player -> player.sendMessage(message));
+		}
+		return this;
+	}
+
 	public Broadcaster toActionBar(String message) {
 		players.forEach(player -> EntityUtils.sendActionBarInfo(player, message));
 		return this;

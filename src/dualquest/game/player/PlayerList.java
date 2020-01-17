@@ -23,16 +23,12 @@ public class PlayerList implements Iterable<DQPlayer> {
 		return selector().select();
 	}
 
-	public List<DQPlayer> getValidDQPlayers() {
-		return selector().valid().select();
-	}
-
 	public List<Player> getPlayers() {
 		return selector().online().selectPlayers();
 	}
 
 	public List<Player> getValidPlayers() {
-		return selector().online().valid().selectPlayers();
+		return selector().online().selectPlayers();
 	}
 
 	public static PlayerList empty() {
@@ -73,18 +69,19 @@ public class PlayerList implements Iterable<DQPlayer> {
 	public static class Selector {
 
 		private List<DQPlayer> selected;
+		private boolean includeInvalid = false;
 
 		private Selector(List<DQPlayer> input) {
 			selected = Lists.newArrayList(input);
 		}
 
-		public int count() {
-			return selected.size();
+		public Selector includeInvalid() {
+			includeInvalid = true;
+			return this;
 		}
 
-		public Selector valid() {
-			selected.removeIf(player -> !player.isValid());
-			return this;
+		public int count() {
+			return selected.size();
 		}
 
 		public Selector online() {
@@ -103,10 +100,16 @@ public class PlayerList implements Iterable<DQPlayer> {
 		}
 
 		public List<DQPlayer> select() {
+			if(!includeInvalid) {
+				selected.removeIf(player -> !player.isValid());
+			}
 			return selected;
 		}
 
 		public List<Player> selectPlayers() {
+			if(!includeInvalid) {
+				selected.removeIf(player -> !player.isValid());
+			}
 			return selected.stream().map(DQPlayer::getPlayer).collect(Collectors.toList());
 		}
 

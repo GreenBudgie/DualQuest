@@ -6,6 +6,8 @@ import dualquest.util.TaskManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
@@ -63,8 +65,16 @@ public class ScoreboardHandler {
 		}
 	}
 
-	public static void updateGameScoreboard() {
-
+	public static void updateGameScoreboard(Player player) {
+		Scoreboard board = player.getScoreboard();
+		Objective gameInfo = board.getObjective("gameInfo");
+		if(gameInfo != null) gameInfo.unregister();
+		gameInfo = board.registerNewObjective("gameInfo", "dummy", DualQuest.getLogo());
+		gameInfo.setDisplaySlot(DisplaySlot.SIDEBAR);
+		if(PlayerHandler.isPlaying(player)) {
+			
+		}
+		int c = 0;
 	}
 
 	public static void createLobbyScoreboard() {
