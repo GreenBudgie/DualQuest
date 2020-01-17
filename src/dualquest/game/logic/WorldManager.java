@@ -57,6 +57,7 @@ public class WorldManager {
 			gameWorld.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
 			gameWorld.setGameRule(GameRule.DO_WEATHER_CYCLE, false);
 			gameWorld.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
+			gameWorld.setGameRule(GameRule.DO_IMMEDIATE_RESPAWN, true);
 			gameWorld.setPVP(false);
 			gameWorld.setTime(0);
 

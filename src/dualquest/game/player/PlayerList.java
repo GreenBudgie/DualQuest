@@ -23,19 +23,16 @@ public class PlayerList implements Iterable<DQPlayer> {
 		return selector().select();
 	}
 
+	public List<DQPlayer> getValidDQPlayers() {
+		return selector().valid().select();
+	}
+
 	public List<Player> getPlayers() {
 		return selector().online().selectPlayers();
 	}
 
-	public void remove(DQPlayer p) {
-		players.remove(p);
-	}
-
-	public void remove(Player p) {
-		DQPlayer dqPlayer = DQPlayer.fromPlayer(p);
-		if(dqPlayer != null) {
-			players.remove(dqPlayer);
-		}
+	public List<Player> getValidPlayers() {
+		return selector().online().valid().selectPlayers();
 	}
 
 	public static PlayerList empty() {
@@ -83,6 +80,11 @@ public class PlayerList implements Iterable<DQPlayer> {
 
 		public int count() {
 			return selected.size();
+		}
+
+		public Selector valid() {
+			selected.removeIf(player -> !player.isValid());
+			return this;
 		}
 
 		public Selector online() {

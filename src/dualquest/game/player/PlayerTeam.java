@@ -9,12 +9,14 @@ import java.util.function.Consumer;
 
 public enum PlayerTeam {
 
-	QUESTERS(new Cases(ChatColor.BLUE, "Квестеры", "Квестеров", "Квестерам", "Квестеров", "Квестерами", "Квестерах")),
-	ATTACKERS(new Cases(ChatColor.DARK_RED, "Атакующие", "Атакующих", "Атакующим", "Атакующих", "Атакующими", "Атакующих"));
+	QUESTERS(ChatColor.BLUE, new Cases(ChatColor.BLUE, "Квестеры", "Квестеров", "Квестерам", "Квестеров", "Квестерами", "Квестерах")),
+	ATTACKERS(ChatColor.DARK_RED, new Cases(ChatColor.DARK_RED, "Атакующие", "Атакующих", "Атакующим", "Атакующих", "Атакующими", "Атакующих"));
 
+	private ChatColor color;
 	private Cases nameCases;
 
-	PlayerTeam(Cases nameCases) {
+	PlayerTeam(ChatColor color, Cases nameCases) {
+		this.color = color;
 		this.nameCases = nameCases;
 	}
 
@@ -22,6 +24,10 @@ public enum PlayerTeam {
 	public static PlayerTeam getTeam(Player player) {
 		DQPlayer dqPlayer = DQPlayer.fromPlayer(player);
 		return dqPlayer == null ? null : dqPlayer.getTeam();
+	}
+
+	public ChatColor getColor() {
+		return color;
 	}
 
 	public Cases getCases() {

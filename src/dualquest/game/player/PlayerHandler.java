@@ -5,17 +5,20 @@ import dualquest.game.logic.ScoreboardHandler;
 import dualquest.game.logic.WorldManager;
 import dualquest.util.Broadcaster;
 import org.bukkit.ChatColor;
-import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
+import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.scoreboard.ScoreboardManager;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -39,7 +42,7 @@ public class PlayerHandler implements Listener {
 	}
 
 	public static boolean isPlaying(Player player) {
-		return playerList.getPlayers().contains(player);
+		return playerList.getValidPlayers().contains(player);
 	}
 
 	public static boolean isSpectator(Player player) {
@@ -59,7 +62,7 @@ public class PlayerHandler implements Listener {
 	 */
 	@SuppressWarnings("UnstableApiUsage")
 	public static List<Player> getInGamePlayers() {
-		return Streams.concat(playerList.getPlayers().stream(), spectators.stream()).collect(Collectors.toList());
+		return Streams.concat(playerList.getValidPlayers().stream(), spectators.stream()).collect(Collectors.toList());
 	}
 
 	public static List<Player> getLobbyPlayers() {
@@ -67,6 +70,8 @@ public class PlayerHandler implements Listener {
 	}
 
 	public static void joinSpectators(Player player) {
+		reset(player);
+		player.teleport(WorldManager.getSpectatorsSpawn());
 		spectators.add(player);
 	}
 
@@ -86,6 +91,31 @@ public class PlayerHandler implements Listener {
 		player.setSaturation(20);
 		player.setExhaustion(20);
 		player.setFoodLevel(20);
+	}
+
+	@EventHandler
+	public void deadPlayerInteract(PlayerArmorStandManipulateEvent e) {
+		ArmorStand stand = e.getRightClicked();
+		if(stand.hasMetadata("dead_player")) {
+			e.setCancelled(true);
+		}
+	}
+
+	@EventHandler
+	public void deadPlayerInteract(EntityDamageByEntityEvent e) {
+		if(e.getDamager() instanceof Player && e.getEntity() instanceof ArmorStand) {
+			Player player = (Player) e.getDamager();
+			ArmorStand stand = (ArmorStand) e.getEntity();
+			if(stand.hasMetadata("dead_player")) {
+				for(DQPlayer dqPlayer : getPlayerList()) {
+					if(dqPlayer.getQuitStand() == stand) {
+						dqPlayer.killAsArmorStand(DQPlayer.fromPlayer(player));
+						break;
+					}
+				}
+				e.setCancelled(true);
+			}
+		}
 	}
 
 	@EventHandler
