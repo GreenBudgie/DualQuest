@@ -4,6 +4,7 @@ import com.google.common.collect.Streams;
 import dualquest.game.logic.ScoreboardHandler;
 import dualquest.game.logic.WorldManager;
 import dualquest.util.Broadcaster;
+import dualquest.util.WorldUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.ArmorStand;
@@ -11,10 +12,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,12 +36,16 @@ public class PlayerHandler implements Listener {
 		playerList = new PlayerList(players.stream().map(DQPlayer::new).collect(Collectors.toList()));
 	}
 
+	public static void clearPlayerList() {
+		playerList = PlayerList.empty();
+	}
+
 	public static List<Player> getSpectators() {
 		return spectators;
 	}
 
 	public static boolean isPlaying(Player player) {
-		return playerList.getValidPlayers().contains(player);
+		return playerList.getPlayers().contains(player);
 	}
 
 	public static boolean isSpectator(Player player) {
@@ -62,11 +65,19 @@ public class PlayerHandler implements Listener {
 	 */
 	@SuppressWarnings("UnstableApiUsage")
 	public static List<Player> getInGamePlayers() {
-		return Streams.concat(playerList.getValidPlayers().stream(), spectators.stream()).collect(Collectors.toList());
+		return Streams.concat(playerList.getPlayers().stream(), spectators.stream()).collect(Collectors.toList());
 	}
 
 	public static List<Player> getLobbyPlayers() {
 		return WorldManager.getLobby().getPlayers();
+	}
+
+	public static void update() {
+		for(DQPlayer dqPlayer : playerList.getDQPlayers()) {
+			if(dqPlayer.isValid()) {
+				dqPlayer.update();
+			}
+		}
 	}
 
 	public static void joinSpectators(Player player) {
@@ -123,6 +134,37 @@ public class PlayerHandler implements Listener {
 		if(WorldManager.generating) {
 			e.setKickMessage(ChatColor.GOLD + "Сейчас идет генерация мира, зайди немного позже");
 			e.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_OTHER);
+		}
+	}
+
+	@EventHandler
+	public void death(PlayerDeathEvent e) {
+		e.setDeathMessage(null);
+		Player player = e.getEntity();
+		DQPlayer dqPlayer = DQPlayer.fromPlayer(player);
+		if(dqPlayer != null && dqPlayer.isValid()) {
+
+		}
+	}
+
+	@EventHandler
+	public void move(PlayerMoveEvent e) {
+		Player player = e.getPlayer();
+		DQPlayer dqPlayer = DQPlayer.fromPlayer(player);
+		if(dqPlayer != null && dqPlayer.isValid() && e.getTo() != null) {
+			boolean spectating = (dqPlayer.isTemporaryDead() && !dqPlayer.isSpectatingTeammates()) || dqPlayer.isRespawning();
+			if(spectating && !WorldUtils.compareIntegerLocations(e.getFrom(), e.getTo())) {
+				e.setCancelled(true);
+			}
+		}
+	}
+
+	@EventHandler
+	public void teleport(PlayerTeleportEvent e) {
+		Player player = e.getPlayer();
+		DQPlayer dqPlayer = DQPlayer.fromPlayer(player);
+		if(dqPlayer != null && (dqPlayer.isRespawning() || dqPlayer.isTemporaryDead()) && e.getCause() == PlayerTeleportEvent.TeleportCause.SPECTATE) {
+			e.setCancelled(true);
 		}
 	}
 

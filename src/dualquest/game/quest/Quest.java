@@ -1,12 +1,15 @@
 package dualquest.game.quest;
 
+import dualquest.game.Plugin;
 import dualquest.game.player.PlayerHandler;
-import dualquest.game.player.PlayerTeam;
 import dualquest.util.Broadcaster;
 import dualquest.util.TaskManager;
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,15 +23,19 @@ public abstract class Quest {
 
 	public abstract List<String> getDescriptionLines();
 
-	public abstract void onEnable();
+	public void onActivate() {}
 
-	public abstract void onComplete();
+	public void onDeactivate() {}
 
-	public abstract boolean isCompleted();
+	public void onComplete() {}
+
+	public void onFail() {}
 
 	public abstract int getDuration();
 
-	public abstract void onTimeEnd();
+	public void onTimeEnd() {
+		fail();
+	}
 
 	public void update() {
 		if(TaskManager.isSecUpdated()) {
@@ -39,32 +46,50 @@ public abstract class Quest {
 		}
 	}
 
-	public void complete() {
-
+	public final void complete() {
+		onComplete();
+		deactivate();
 	}
 
-	public void activate() {
-		Broadcaster.each(PlayerHandler.getPlayerList().selector().team(PlayerTeam.QUESTERS).selectPlayers()).and(PlayerHandler.getSpectators()).toChat(getAnnounceMessage())
+	public final void fail() {
+		onFail();
+		deactivate();
+	}
+
+	public final void activate() {
+		Broadcaster.each(PlayerHandler.getPlayerList().selector().questers().selectPlayers()).and(PlayerHandler.getSpectators()).toChat(getAnnounceMessage())
 				.sound(Sound.ENTITY_ENDER_DRAGON_FLAP, 1F, 0.8F).title(ChatColor.DARK_AQUA + "Новый квест", ChatColor.AQUA + getName(), 10, 40, 20);
-		Broadcaster.each(PlayerHandler.getPlayerList().selector().team(PlayerTeam.ATTACKERS).selectPlayers()).
+		Broadcaster.each(PlayerHandler.getPlayerList().selector().attackers().selectPlayers())
+				.title("", ChatColor.RED + "Квестеры получают новый квест!", 10, 40, 20).sound(Sound.ENTITY_ENDER_DRAGON_FLAP, 1F, 0.8F);
+		if(this instanceof Listener) {
+			Bukkit.getPluginManager().registerEvents((Listener) this, Plugin.INSTANCE);
+		}
+		timeToEnd = getDuration() * 60;
+		QuestManager.currentQuest = this;
+		onActivate();
 	}
 
-	public void deactivate() {
-
+	public final void deactivate() {
+		onDeactivate();
+		if(this instanceof Listener) {
+			HandlerList.unregisterAll((Listener) this);
+		}
+		QuestManager.currentQuest = null;
 	}
 
 	public final int getTimeToEnd() {
 		return timeToEnd;
 	}
 
-	public boolean isActive() {
+	public final boolean isActive() {
 		return QuestManager.getCurrentQuest() != null && QuestManager.getCurrentQuest() == this;
 	}
 
-	public List<String> getAnnounceMessage() {
+	public final List<String> getAnnounceMessage() {
 		List<String> lines = new ArrayList<>();
 		String name =
-				ChatColor.DARK_GRAY + "----- " + ChatColor.YELLOW + ChatColor.BOLD + "Квест: " + ChatColor.RESET + ChatColor.AQUA + getName() + ChatColor.DARK_GRAY + " -----";
+				ChatColor.DARK_GRAY + "----- " + ChatColor.YELLOW + ChatColor.BOLD + "Квест: " + ChatColor.RESET + ChatColor.AQUA + getName() + ChatColor.DARK_GRAY
+						+ " -----";
 		lines.add(name);
 		lines.add("");
 		lines.add(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "Задача:");

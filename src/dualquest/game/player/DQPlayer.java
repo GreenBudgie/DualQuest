@@ -4,10 +4,12 @@ import dualquest.game.Plugin;
 import dualquest.game.logic.GameState;
 import dualquest.game.logic.WorldManager;
 import dualquest.util.Broadcaster;
+import dualquest.util.MathUtils;
 import dualquest.util.ParticleUtils;
 import dualquest.util.TaskManager;
 import org.bukkit.*;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -15,13 +17,14 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.metadata.FixedMetadataValue;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 /**
  * Represents an in-game player. Stays if the player left the game and can rejoin
  */
 public class DQPlayer {
 
-	private boolean valid = false;
+	private boolean valid = true;
 
 	private final String playerName;
 	private Player player;
@@ -38,11 +41,13 @@ public class DQPlayer {
 	private int remainingQuits = 3;
 
 	//Fields for attackers only
-	private boolean isAlive = true;
+	private boolean isRespawning = false;
 	private int secondsToRespawn = 10;
 
 	//Fields for questers only
-
+	private boolean isTemporaryDead = false;
+	private int secondsToStartSpectating = 5;
+	private boolean isSpectatingTeammates = false;
 
 	/**
 	 * Registers a new DQPlayer
@@ -103,13 +108,48 @@ public class DQPlayer {
 	}
 
 	public void update() {
-		if(isValid() && TaskManager.isSecUpdated()) {
+		if(TaskManager.isSecUpdated()) {
 			if(!isOnServer()) {
 				secondsToKick--;
 				if(secondsToKick <= 0) {
 					kickWhileLeft();
 				}
+			} else {
+				if(team == PlayerTeam.ATTACKERS) {
+					if(isRespawning()) {
+						secondsToRespawn--;
+						if(secondsToRespawn <= 0) {
+							respawn();
+						}
+					}
+				} else {
+					if(isTemporaryDead() && !isSpectatingTeammates()) {
+						secondsToStartSpectating--;
+						if(secondsToStartSpectating <= 0) {
+							isSpectatingTeammates = true;
+						}
+					}
+				}
 			}
+		}
+		if(isSpectatingTeammates()) {
+			Entity target = player.getSpectatorTarget();
+			if(!(target instanceof Player)) {
+				List<Player> players = PlayerHandler.getPlayerList().selector().aliveQuesters().selectPlayers();
+				Player newTarget = MathUtils.choose(players);
+				player.setSpectatorTarget(newTarget);
+			}
+		}
+	}
+
+	public void respawn() {
+		if(team == PlayerTeam.ATTACKERS) {
+			player.teleport(WorldManager.getAttackersSpawn());
+			isRespawning = false;
+		} else {
+			player.teleport(WorldManager.getQuestersSpawn());
+			isSpectatingTeammates = false;
+			isTemporaryDead = false;
 		}
 	}
 
@@ -133,6 +173,30 @@ public class DQPlayer {
 			}
 		}
 		quitStand.remove();
+	}
+
+	/**
+	 * Whether the QUESTER player has been killed and currently waits for respawn
+	 * @return Whether the player is respawning
+	 */
+	public boolean isTemporaryDead() {
+		return isTemporaryDead;
+	}
+
+	/**
+	 * Whether the QUESTER player has been killed and currently spectating his teammates
+	 * @return Whether the player is respawning
+	 */
+	public boolean isSpectatingTeammates() {
+		return isSpectatingTeammates;
+	}
+
+	/**
+	 * Whether the ATTACKER player has been killed and currently waits for respawn
+	 * @return Whether the player is respawning
+	 */
+	public boolean isRespawning() {
+		return isRespawning;
 	}
 
 	/**
@@ -174,14 +238,14 @@ public class DQPlayer {
 			Broadcaster.inWorld(WorldManager.getGameWorld()).toChat(team.getColor() + playerName + ChatColor.RED + ChatColor.BOLD + " вылетел с серва!");
 			ParticleUtils.createParticlesAround(player, Particle.SMOKE_LARGE, null, 10);
 			player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_BURP, 1F, 1F);
-			this.player = null;
-			this.onServer = false;
+			player = null;
+			onServer = false;
 			valid = false;
 			return;
 		}
 		if(GameState.isState(GameState.ENDING)) {
-			this.player = null;
-			this.onServer = false;
+			player = null;
+			onServer = false;
 			//TODO
 			return;
 		}
@@ -232,11 +296,11 @@ public class DQPlayer {
 	 */
 	public void death() {
 		if(team == PlayerTeam.QUESTERS) {
-			PlayerHandler.joinSpectators(player);
-			valid = false;
+			isTemporaryDead = true;
+			secondsToStartSpectating = 5;
 		} else {
 			player.setGameMode(GameMode.SPECTATOR);
-			isAlive = false;
+			isRespawning = true;
 			secondsToRespawn = 10;
 		}
 	}
@@ -266,4 +330,5 @@ public class DQPlayer {
 	public int hashCode() {
 		return playerName.hashCode();
 	}
+
 }

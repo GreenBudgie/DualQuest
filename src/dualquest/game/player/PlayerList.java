@@ -24,11 +24,7 @@ public class PlayerList implements Iterable<DQPlayer> {
 	}
 
 	public List<Player> getPlayers() {
-		return selector().online().selectPlayers();
-	}
-
-	public List<Player> getValidPlayers() {
-		return selector().online().selectPlayers();
+		return selector().selectPlayers();
 	}
 
 	public static PlayerList empty() {
@@ -84,6 +80,16 @@ public class PlayerList implements Iterable<DQPlayer> {
 			return selected.size();
 		}
 
+		public Selector spectatingQuesters() {
+			selected.removeIf(player -> player.getTeam() != PlayerTeam.QUESTERS || !player.isTemporaryDead());
+			return this;
+		}
+
+		public Selector aliveQuesters() {
+			selected.removeIf(player -> player.getTeam() != PlayerTeam.QUESTERS || player.isTemporaryDead());
+			return this;
+		}
+
 		public Selector online() {
 			selected.removeIf(player -> !player.isOnServer());
 			return this;
@@ -96,6 +102,16 @@ public class PlayerList implements Iterable<DQPlayer> {
 
 		public Selector team(PlayerTeam team) {
 			selected.removeIf(player -> player.getTeam() != team);
+			return this;
+		}
+
+		public Selector questers() {
+			selected.removeIf(player -> player.getTeam() != PlayerTeam.QUESTERS);
+			return this;
+		}
+
+		public Selector attackers() {
+			selected.removeIf(player -> player.getTeam() != PlayerTeam.ATTACKERS);
 			return this;
 		}
 

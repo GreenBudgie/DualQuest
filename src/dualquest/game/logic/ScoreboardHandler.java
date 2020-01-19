@@ -1,7 +1,10 @@
 package dualquest.game.logic;
 
+import dualquest.game.player.DQPlayer;
 import dualquest.game.player.PlayerHandler;
 import dualquest.game.player.PlayerTeam;
+import dualquest.game.quest.Quest;
+import dualquest.game.quest.QuestManager;
 import dualquest.util.TaskManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -15,7 +18,7 @@ import java.util.Set;
 
 public class ScoreboardHandler {
 
-	private static Scoreboard lobbyScoreboard;
+	public static Scoreboard lobbyScoreboard;
 
 	public static void createGameScoreboard(Player player) {
 		Scoreboard gameScoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
@@ -66,15 +69,35 @@ public class ScoreboardHandler {
 	}
 
 	public static void updateGameScoreboard(Player player) {
+		DQPlayer dqPlayer = DQPlayer.fromPlayer(player);
+		boolean hasDQ = dqPlayer != null;
 		Scoreboard board = player.getScoreboard();
 		Objective gameInfo = board.getObjective("gameInfo");
 		if(gameInfo != null) gameInfo.unregister();
 		gameInfo = board.registerNewObjective("gameInfo", "dummy", DualQuest.getLogo());
 		gameInfo.setDisplaySlot(DisplaySlot.SIDEBAR);
-		if(PlayerHandler.isPlaying(player)) {
-			
-		}
 		int c = 0;
+		Quest currentQuest = QuestManager.getCurrentQuest();
+		if((PlayerHandler.isSpectator(player) || (hasDQ && dqPlayer.getTeam() == PlayerTeam.QUESTERS)) && currentQuest != null) {
+			gameInfo.getScore(ChatColor.LIGHT_PURPLE + "Квест" + ChatColor.DARK_GRAY + ": " + ChatColor.AQUA + currentQuest.getName() + ChatColor.DARK_GRAY + " ("
+					+ ChatColor.DARK_AQUA + TaskManager.formatTime(currentQuest.getTimeToEnd()) + ChatColor.DARK_GRAY + ")").setScore(c++);
+		}
+		if(PlayerHandler.isPlaying(player) && hasDQ) {
+			for(DQPlayer teammate : PlayerHandler.getPlayerList().selector().team(dqPlayer.getTeam()).select()) {
+				String prefix = ChatColor.DARK_GRAY + "- ";
+				if(!teammate.isValid()) {
+					prefix += ChatColor.DARK_RED + "" + ChatColor.STRIKETHROUGH;
+				} else if(teammate.isRespawning() || teammate.isTemporaryDead()) {
+					prefix += ChatColor.GRAY;
+				} else if(teammate.equals(dqPlayer)) {
+					prefix += ChatColor.DARK_GREEN;
+				} else {
+					prefix += ChatColor.GOLD;
+				}
+				gameInfo.getScore(prefix + teammate.getPlayerName()).setScore(c++);
+			}
+			gameInfo.getScore(ChatColor.YELLOW + "Команда " + dqPlayer.getTeam().getCases().getGenitive() + ChatColor.DARK_GRAY + ":").setScore(c);
+		}
 	}
 
 	public static void createLobbyScoreboard() {

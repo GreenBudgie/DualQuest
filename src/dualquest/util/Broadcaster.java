@@ -24,6 +24,10 @@ public class Broadcaster {
 
 	private Set<Player> players;
 
+	public static void info(Object msg) {
+		Bukkit.broadcastMessage(msg.toString());
+	}
+
 	public static Broadcaster everybody() {
 		return new Broadcaster(Lists.newArrayList(Bukkit.getOnlinePlayers()));
 	}

@@ -9,12 +9,12 @@ import java.util.Date;
 
 public class TaskManager {
 
-	public static int tick = 0;
-	public static long fullTicks = 0;
-	public static int sec = 0;
-	public static long fullSeconds = 0;
-	public static int min = 0;
-	public static long fullMinutes = 0;
+	private static int tick = 0;
+	private static long fullTicks = 0;
+	private static int sec = 0;
+	private static long fullSeconds = 0;
+	private static int min = 0;
+	private static long fullMinutes = 0;
 
 	public static void init() {
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(Plugin.INSTANCE, () -> {

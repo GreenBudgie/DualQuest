@@ -29,7 +29,6 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -46,54 +45,67 @@ public class GameStartManager implements Listener {
 		if(GameState.isPlaying()) throw new IllegalStateException("Cannot start the game at the current moment! It's already running");
 		if(!WorldManager.hasWorld()) throw new IllegalStateException("Cannot start without the generated world!");
 
+		boolean fast = ArrayUtils.contains(options, Option.FAST);
+
 		PlayerHandler.initPlayerList(Bukkit.getOnlinePlayers());
 		dividePlayersByTeams(ArrayUtils.contains(options, Option.ONLY_QUESTERS), ArrayUtils.contains(options, Option.ONLY_ATTACKERS));
 
 		PlayerList playerList = PlayerHandler.getPlayerList();
 		List<Location> questersSpawns = calculateSpawnLocationsFor(playerList.selector().team(PlayerTeam.QUESTERS).selectPlayers(), WorldManager.getQuestersSpawn());
-		List<Location> attackersSpawns = calculateSpawnLocationsFor(playerList.selector().team(PlayerTeam.ATTACKERS).selectPlayers(), WorldManager.getAttackersSpawn());
+		List<Location> attackersSpawns = calculateSpawnLocationsFor(playerList.selector().team(PlayerTeam.ATTACKERS).selectPlayers(),
+				WorldManager.getAttackersSpawn());
 		playerSpawns.clear();
 		playerSpawns.addAll(questersSpawns);
 		playerSpawns.addAll(attackersSpawns);
 		createGlassPlatforms();
-		teleportPlayers(playerList.selector().valid().team(PlayerTeam.QUESTERS).selectPlayers(), questersSpawns);
-		teleportPlayers(playerList.selector().valid().team(PlayerTeam.ATTACKERS).selectPlayers(), attackersSpawns);
+		teleportPlayers(playerList.selector().team(PlayerTeam.QUESTERS).selectPlayers(), questersSpawns);
+		teleportPlayers(playerList.selector().team(PlayerTeam.ATTACKERS).selectPlayers(), attackersSpawns);
 
 		for(Player player : PlayerHandler.getInGamePlayers()) {
 			LobbyParkourHandler.stopPassing(player);
 			ScoreboardHandler.createGameScoreboard(player);
-			voteBar.addPlayer(player);
 			PlayerHandler.reset(player);
-			player.getInventory().setItem(3, ItemUtils.builder(Material.LIME_DYE).withName(ChatColor.GREEN + "Карта норм").build());
-			player.getInventory().setItem(5, ItemUtils.builder(Material.RED_DYE).withName(ChatColor.RED + "Карта говно").build());
+			if(!fast) {
+				voteBar.addPlayer(player);
+				player.getInventory().setItem(3, ItemUtils.builder(Material.LIME_DYE).withName(ChatColor.GREEN + "Карта норм").build());
+				player.getInventory().setItem(5, ItemUtils.builder(Material.RED_DYE).withName(ChatColor.RED + "Карта говно").build());
+			}
 			player.setGameMode(GameMode.ADVENTURE);
 		}
 
 		ScoreboardHandler.updateScoreboardTeamsLater();
 
-		voteBar.setVisible(true);
-		votes.clear();
-		updateVoteBar();
+		if(!fast) {
+			voteBar.setVisible(true);
+			votes.clear();
+			updateVoteBar();
+		}
 
 		infoStandQuesters = createInfoStand(PlayerTeam.QUESTERS);
 		infoStandAttackers = createInfoStand(PlayerTeam.ATTACKERS);
 
-		GameState.VOTING.set(20);
+		if(fast) {
+			GameState.PREPARING.set(5);
+		} else {
+			GameState.VOTING.set(20);
+		}
 	}
 
 	private static ArmorStand createInfoStand(PlayerTeam team) {
+		Location location;
 		if(PlayerHandler.getPlayerList().selector().team(team).count() > 0) {
-			Location location = WorldManager.getSpawn(team).clone().add(0.5, 0, 0.5);
+			location = WorldManager.getSpawn(team).clone().add(0.5, 0, 0.5);
 			location.setY(PlayerHandler.getPlayerList().selector().team(team).selectPlayers().get(0).getLocation().getY() + 0.7);
-			ArmorStand stand = (ArmorStand) WorldManager.getGameWorld().spawnEntity(location, EntityType.ARMOR_STAND);
-			stand.setCustomName(team.getName());
-			stand.setCustomNameVisible(true);
-			stand.setMarker(true);
-			stand.setVisible(false);
-			stand.setInvulnerable(true);
-			return stand;
+		} else {
+			location = WorldManager.getSpawn(team).clone().add(0.5, 2, 0.5);
 		}
-		return null;
+		ArmorStand stand = (ArmorStand) WorldManager.getGameWorld().spawnEntity(location, EntityType.ARMOR_STAND);
+		stand.setCustomName(team.getName());
+		stand.setCustomNameVisible(true);
+		stand.setMarker(true);
+		stand.setVisible(false);
+		stand.setInvulnerable(true);
+		return stand;
 	}
 
 	public static void removeInfoStands() {
@@ -177,19 +189,20 @@ public class GameStartManager implements Listener {
 	private static void updateVoteBar() {
 		boolean questersPassed = teamPassedVote(PlayerTeam.QUESTERS);
 		boolean attackersPassed = teamPassedVote(PlayerTeam.ATTACKERS);
-		String checkMarkQuesters = (questersPassed ? ChatColor.GREEN + " \u2714 " : "");
-		String checkMarkAttackers = (attackersPassed ? ChatColor.GREEN + " \u2714 " : "");
+		String checkMarkQuesters = (questersPassed ? ChatColor.GREEN + " \u2714 " : " ");
+		String checkMarkAttackers = (attackersPassed ? ChatColor.GREEN + " \u2714 " : " ");
 		List<Player> votedQuesters = votes.keySet().stream().filter(PlayerTeam.QUESTERS::contains).collect(Collectors.toList());
 		int questersVotedFor = (int) votedQuesters.stream().filter(player -> votes.get(player)).count();
 		int questersVotedAgainst = votedQuesters.size() - questersVotedFor;
 		String questers =
-				ChatColor.GREEN + "" + questersVotedFor + ChatColor.GRAY + "/" + ChatColor.RED + questersVotedAgainst + checkMarkQuesters + PlayerTeam.QUESTERS.getName();
+				ChatColor.GREEN + "" + questersVotedFor + ChatColor.GRAY + "/" + ChatColor.RED + questersVotedAgainst + checkMarkQuesters + PlayerTeam.QUESTERS
+						.getName();
 
 		List<Player> votedAttackers = votes.keySet().stream().filter(PlayerTeam.ATTACKERS::contains).collect(Collectors.toList());
 		int attackersVotedFor = (int) votedAttackers.stream().filter(player -> votes.get(player)).count();
 		int attackersVotedAgainst = votedAttackers.size() - attackersVotedFor;
-		String attackers =
-				PlayerTeam.ATTACKERS.getName() + checkMarkAttackers + ChatColor.GREEN + attackersVotedFor + ChatColor.GRAY + "/" + ChatColor.RED + attackersVotedAgainst;
+		String attackers = PlayerTeam.ATTACKERS.getName() + checkMarkAttackers + ChatColor.GREEN + attackersVotedFor + ChatColor.GRAY + "/" + ChatColor.RED
+				+ attackersVotedAgainst;
 		voteBar.setTitle(questers + ChatColor.DARK_GRAY + " | " + attackers);
 
 		questersVotedFor++;
@@ -273,7 +286,7 @@ public class GameStartManager implements Listener {
 
 	public static void endPreparing() {
 		for(Player player : PlayerHandler.getPlayerList().getPlayers()) {
-			player.sendTitle(ChatColor.DARK_GREEN + "" + ChatColor.BOLD +  "Игра " + ChatColor.RESET + ChatColor.GREEN + "Началась!", "", 10, 30, 10);
+			player.sendTitle(ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Игра " + ChatColor.RESET + ChatColor.GREEN + "Началась!", "", 10, 30, 10);
 			player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1F, 1F);
 			player.setGameMode(GameMode.SURVIVAL);
 			PlayerHandler.reset(player);

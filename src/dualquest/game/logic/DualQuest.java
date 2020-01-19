@@ -2,6 +2,7 @@ package dualquest.game.logic;
 
 import dualquest.game.Plugin;
 import dualquest.game.player.PlayerHandler;
+import dualquest.game.quest.QuestManager;
 import dualquest.lobby.LobbyEntertainmentHandler;
 import dualquest.lobby.LobbyParkourHandler;
 import dualquest.lobby.sign.LobbySignManager;
@@ -27,6 +28,7 @@ public class DualQuest implements Listener {
 		LobbyParkourHandler.init();
 		LobbyEntertainmentHandler.init();
 		LobbySignManager.init();
+		QuestManager.init();
 		ScoreboardHandler.createLobbyScoreboard();
 	}
 
@@ -35,7 +37,7 @@ public class DualQuest implements Listener {
 	}
 
 	public static void update() {
-		if(GameState.isPlaying() && TaskManager.isSecUpdated()) {
+		if(GameState.isPlaying()) {
 			GameProcess.update();
 		}
 	}
