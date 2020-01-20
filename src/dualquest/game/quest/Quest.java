@@ -23,13 +23,17 @@ public abstract class Quest {
 
 	public abstract List<String> getDescriptionLines();
 
-	public void onActivate() {}
+	public void onActivate() {
+	}
 
-	public void onDeactivate() {}
+	public void onDeactivate() {
+	}
 
-	public void onComplete() {}
+	public void onComplete() {
+	}
 
-	public void onFail() {}
+	public void onFail() {
+	}
 
 	public abstract int getDuration();
 
@@ -57,16 +61,16 @@ public abstract class Quest {
 	}
 
 	public final void activate() {
-		Broadcaster.each(PlayerHandler.getPlayerList().selector().questers().selectPlayers()).and(PlayerHandler.getSpectators()).toChat(getAnnounceMessage())
-				.sound(Sound.ENTITY_ENDER_DRAGON_FLAP, 1F, 0.8F).title(ChatColor.DARK_AQUA + "Новый квест", ChatColor.AQUA + getName(), 10, 40, 20);
-		Broadcaster.each(PlayerHandler.getPlayerList().selector().attackers().selectPlayers())
-				.title("", ChatColor.RED + "Квестеры получают новый квест!", 10, 40, 20).sound(Sound.ENTITY_ENDER_DRAGON_FLAP, 1F, 0.8F);
 		if(this instanceof Listener) {
 			Bukkit.getPluginManager().registerEvents((Listener) this, Plugin.INSTANCE);
 		}
 		timeToEnd = getDuration() * 60;
 		QuestManager.currentQuest = this;
 		onActivate();
+		Broadcaster.each(PlayerHandler.getPlayerList().selector().questers().selectPlayers()).and(PlayerHandler.getSpectators()).toChat(getAnnounceMessage())
+				.sound(Sound.ENTITY_ENDER_DRAGON_FLAP, 1F, 0.8F).title(ChatColor.DARK_AQUA + "Новый квест", ChatColor.AQUA + getName(), 10, 40, 20);
+		Broadcaster.each(PlayerHandler.getPlayerList().selector().attackers().selectPlayers())
+				.title("", ChatColor.RED + "Квестеры получают новый квест!", 10, 40, 20).sound(Sound.ENTITY_ENDER_DRAGON_FLAP, 1F, 0.8F);
 	}
 
 	public final void deactivate() {

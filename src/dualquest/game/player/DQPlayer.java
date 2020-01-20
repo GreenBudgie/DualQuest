@@ -3,10 +3,7 @@ package dualquest.game.player;
 import dualquest.game.Plugin;
 import dualquest.game.logic.GameState;
 import dualquest.game.logic.WorldManager;
-import dualquest.util.Broadcaster;
-import dualquest.util.MathUtils;
-import dualquest.util.ParticleUtils;
-import dualquest.util.TaskManager;
+import dualquest.util.*;
 import org.bukkit.*;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -14,6 +11,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 
 import javax.annotation.Nullable;
@@ -24,9 +22,8 @@ import java.util.List;
  */
 public class DQPlayer {
 
-	private boolean valid = true;
-
 	private final String playerName;
+	private boolean valid = true;
 	private Player player;
 	private PlayerTeam team = null;
 	private boolean onServer = true;
@@ -59,15 +56,15 @@ public class DQPlayer {
 	}
 
 	/**
-	 * Finds the DQPlayer that is bound to the given player. Returns null if the player wasn't found. This method uses <b>player nickname comparison</b>, that means that it
-	 * searches the DQPlayer by comparing {@link Player#getName()} with {@link DQPlayer#getPlayerName()}
+	 * Finds the DQPlayer that is bound to the given player. Returns null if the player wasn't found. This method uses <b>player nickname comparison</b>, that means
+	 * that it searches the DQPlayer by comparing {@link Player#getName()} with {@link DQPlayer#getPlayerName()}
 	 * @param player The player
 	 * @return DQPlayer that is bound to the given player, or null
 	 */
 	@Nullable
 	public static DQPlayer fromPlayer(Player player) {
-		if(PlayerHandler.getPlayerList().isEmpty()) return null;
-		return PlayerHandler.getPlayerList().getDQPlayers().stream().filter(dqp -> dqp.isOnServer() && dqp.getPlayerName().equals(player.getName())).findFirst().orElse(null);
+		if(player == null || PlayerHandler.getPlayerList().isEmpty()) return null;
+		return PlayerHandler.getPlayerList().getDQPlayers().stream().filter(dqp -> dqp.getPlayerName().equals(player.getName())).findFirst().orElse(null);
 	}
 
 	/**
@@ -117,6 +114,7 @@ public class DQPlayer {
 			} else {
 				if(team == PlayerTeam.ATTACKERS) {
 					if(isRespawning()) {
+						EntityUtils.sendActionBarInfo(player, ChatColor.RED + "Респавн через " + ChatColor.DARK_AQUA + TaskManager.formatTime(secondsToRespawn));
 						secondsToRespawn--;
 						if(secondsToRespawn <= 0) {
 							respawn();
@@ -129,20 +127,31 @@ public class DQPlayer {
 							isSpectatingTeammates = true;
 						}
 					}
+					if(isSpectatingTeammates()) {
+						Entity target = player.getSpectatorTarget();
+						if(target instanceof Player) {
+							Player targetPlayer = (Player) target;
+							EntityUtils.sendActionBarInfo(player, ChatColor.YELLOW + "Игрок" + ChatColor.GRAY + ": " + ChatColor.GOLD + targetPlayer.getName());
+						}
+					}
 				}
 			}
 		}
 		if(isSpectatingTeammates()) {
-			Entity target = player.getSpectatorTarget();
-			if(!(target instanceof Player)) {
-				List<Player> players = PlayerHandler.getPlayerList().selector().aliveQuesters().selectPlayers();
-				Player newTarget = MathUtils.choose(players);
-				player.setSpectatorTarget(newTarget);
+			List<Player> aliveQuesters = PlayerHandler.getPlayerList().selector().aliveQuesters().selectPlayers();
+			if(aliveQuesters.size() > 0) {
+				Entity target = player.getSpectatorTarget();
+				if(!(target instanceof Player)) {
+					Player newTarget = MathUtils.choose(aliveQuesters);
+					player.setSpectatorTarget(newTarget);
+				}
 			}
 		}
 	}
 
 	public void respawn() {
+		PlayerHandler.reset(player);
+		player.setGameMode(GameMode.SURVIVAL);
 		if(team == PlayerTeam.ATTACKERS) {
 			player.teleport(WorldManager.getAttackersSpawn());
 			isRespawning = false;
@@ -159,11 +168,14 @@ public class DQPlayer {
 		valid = false;
 	}
 
+	public boolean hasQuitStand() {
+		return quitStand != null;
+	}
+
 	public void killAsArmorStand(@Nullable DQPlayer killer) {
 		dropItemsFromStand();
 		diedWhileLeft = true;
 		this.killer = killer;
-		valid = false;
 	}
 
 	private void dropItemsFromStand() {
@@ -173,6 +185,7 @@ public class DQPlayer {
 			}
 		}
 		quitStand.remove();
+		quitStand = null;
 	}
 
 	/**
@@ -212,6 +225,7 @@ public class DQPlayer {
 			player.getInventory().setContents(savedInventory.getContents());
 			Broadcaster.inWorld(WorldManager.getGameWorld()).and(player).toChat(team.getColor() + playerName + ChatColor.DARK_GREEN + " вернулся в игру");
 			quitStand.remove();
+			quitStand = null;
 		} else {
 			PlayerHandler.joinSpectators(player);
 			if(kickedWhileLeft) {
@@ -257,7 +271,11 @@ public class DQPlayer {
 			} else {
 				ArmorStand stand = (ArmorStand) player.getWorld().spawnEntity(player.getLocation(), EntityType.ARMOR_STAND);
 				PlayerInventory inventory = player.getInventory();
-				stand.setHelmet(inventory.getHelmet());
+				ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+				SkullMeta meta = (SkullMeta) head.getItemMeta();
+				meta.setOwningPlayer(player);
+				head.setItemMeta(meta);
+				stand.setHelmet(head);
 				stand.setChestplate(inventory.getChestplate());
 				stand.setLeggings(inventory.getLeggings());
 				stand.setBoots(inventory.getBoots());
@@ -266,7 +284,6 @@ public class DQPlayer {
 				stand.setCustomName(playerName);
 				stand.setCustomNameVisible(true);
 				stand.setGravity(false);
-				stand.setInvulnerable(true);
 				stand.setMetadata("dead_player", new FixedMetadataValue(Plugin.INSTANCE, true));
 				Broadcaster.inWorld(WorldManager.getGameWorld()).toChat(team.getColor() + playerName + ChatColor.RED + " вышел из игры");
 				this.quitLocation = player.getLocation();
@@ -292,13 +309,16 @@ public class DQPlayer {
 	}
 
 	/**
-	 * Handles player's death. If it is an attacker, the player will be respawned, otherwise he will join spectators
+	 * Handles player's death
 	 */
 	public void death() {
+		player.setGameMode(GameMode.SPECTATOR);
 		if(team == PlayerTeam.QUESTERS) {
+			player.sendTitle(ChatColor.DARK_RED + "" + ChatColor.BOLD + "Ты погиб!", ChatColor.GOLD + "Респавн после выполнения квеста", 5, 60, 20);
 			isTemporaryDead = true;
 			secondsToStartSpectating = 5;
 		} else {
+			player.sendTitle(ChatColor.DARK_RED + "" + ChatColor.BOLD + "Ты погиб!", "", 5, 60, 20);
 			player.setGameMode(GameMode.SPECTATOR);
 			isRespawning = true;
 			secondsToRespawn = 10;

@@ -77,6 +77,9 @@ public class PlayerList implements Iterable<DQPlayer> {
 		}
 
 		public int count() {
+			if(!includeInvalid) {
+				selected.removeIf(player -> !player.isValid());
+			}
 			return selected.size();
 		}
 
@@ -124,7 +127,7 @@ public class PlayerList implements Iterable<DQPlayer> {
 
 		public List<Player> selectPlayers() {
 			if(!includeInvalid) {
-				selected.removeIf(player -> !player.isValid());
+				selected.removeIf(player -> !player.isValid() || !player.isOnServer());
 			}
 			return selected.stream().map(DQPlayer::getPlayer).collect(Collectors.toList());
 		}

@@ -36,6 +36,7 @@ public class WorldManager {
 
 		if(Bukkit.getWorld("GameWorld") != null) {
 			gameWorld = Bukkit.getWorld("GameWorld");
+			gameWorld.setDifficulty(Difficulty.HARD);
 			setupLocations();
 		}
 	}

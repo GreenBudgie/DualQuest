@@ -27,6 +27,9 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionEffectTypeWrapper;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -290,6 +293,8 @@ public class GameStartManager implements Listener {
 			player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1F, 1F);
 			player.setGameMode(GameMode.SURVIVAL);
 			PlayerHandler.reset(player);
+			player.setNoDamageTicks(160);
+			player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 160, 10, false, true, true));
 			removeGlassPlatforms();
 		}
 		infoStandQuesters.teleport(WorldManager.getQuestersSpawn().clone().add(0, 2.5, 0));

@@ -79,8 +79,8 @@ public class ScoreboardHandler {
 		int c = 0;
 		Quest currentQuest = QuestManager.getCurrentQuest();
 		if((PlayerHandler.isSpectator(player) || (hasDQ && dqPlayer.getTeam() == PlayerTeam.QUESTERS)) && currentQuest != null) {
-			gameInfo.getScore(ChatColor.LIGHT_PURPLE + "Квест" + ChatColor.DARK_GRAY + ": " + ChatColor.AQUA + currentQuest.getName() + ChatColor.DARK_GRAY + " ("
-					+ ChatColor.DARK_AQUA + TaskManager.formatTime(currentQuest.getTimeToEnd()) + ChatColor.DARK_GRAY + ")").setScore(c++);
+			gameInfo.getScore(ChatColor.LIGHT_PURPLE + "Квест" + ChatColor.GRAY + ": " + ChatColor.AQUA + currentQuest.getName() + ChatColor.GRAY + " ("
+					+ ChatColor.DARK_AQUA + TaskManager.formatTime(currentQuest.getTimeToEnd()) + ChatColor.GRAY + ")").setScore(c++);
 		}
 		if(PlayerHandler.isPlaying(player) && hasDQ) {
 			for(DQPlayer teammate : PlayerHandler.getPlayerList().selector().team(dqPlayer.getTeam()).select()) {
@@ -90,13 +90,13 @@ public class ScoreboardHandler {
 				} else if(teammate.isRespawning() || teammate.isTemporaryDead()) {
 					prefix += ChatColor.GRAY;
 				} else if(teammate.equals(dqPlayer)) {
-					prefix += ChatColor.DARK_GREEN;
+					prefix += ChatColor.GOLD + "" + ChatColor.BOLD;
 				} else {
 					prefix += ChatColor.GOLD;
 				}
 				gameInfo.getScore(prefix + teammate.getPlayerName()).setScore(c++);
 			}
-			gameInfo.getScore(ChatColor.YELLOW + "Команда " + dqPlayer.getTeam().getCases().getGenitive() + ChatColor.DARK_GRAY + ":").setScore(c);
+			gameInfo.getScore(ChatColor.YELLOW + "Команда " + dqPlayer.getTeam().getCases().getGenitive() + ChatColor.GRAY + ":").setScore(c);
 		}
 	}
 
@@ -123,6 +123,7 @@ public class ScoreboardHandler {
 		for(Player player : Bukkit.getOnlinePlayers()) {
 			if(PlayerHandler.isInLobby(player)) {
 				lobbyTeam.addEntry(player.getName());
+				player.setScoreboard(lobbyScoreboard);
 			}
 			if(PlayerHandler.isInGame(player)) {
 				gameTeam.addEntry(player.getName());

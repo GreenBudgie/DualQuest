@@ -49,10 +49,10 @@ public class GameProcess implements Listener {
 								.repeat(ChatColor.DARK_GRAY + "-", 10));
 						player.sendMessage("");
 						if(PlayerTeam.getTeam(player) == PlayerTeam.QUESTERS) {
-							player.sendMessage(ChatColor.GOLD + "“во€ задача - выполнить квест за определенное врем€. ќстерегайс€ противоположной команды - они будут пытатьс€ помешать выполнению квеста. –еспавнитьс€ можно только после выполненного квеста.");
+							player.sendMessage(ChatColor.GOLD + "“во€ основна€ задача - выжить. ѕротивоположна€ команда будет пытатьс€ теб€ убить. ѕосле смерти ты не респавнишьс€, пока тво€ команда не выполнит квест.");
 							player.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "”дачи!");
 						} else {
-							player.sendMessage(ChatColor.GOLD + "“во€ задача - любыми способами не дать противоположной команде выполнить квест. ћожно либо убить всю команду, либо просто мешать им, чтобы они не успели выполнить квест. “ы респавнишьс€ после смерти.");
+							player.sendMessage(ChatColor.GOLD + "“во€ задача - убить всю противоположную команду любыми способами. ѕосле смерти ты респавнишьс€ на своей базе.");
 							player.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "”дачи!");
 						}
 						player.sendMessage("");
@@ -91,6 +91,7 @@ public class GameProcess implements Listener {
 				timeToNextPhase--;
 			}
 		}
+		PlayerHandler.update();
 	}
 
 	public static int getTimeToNextPhase() {

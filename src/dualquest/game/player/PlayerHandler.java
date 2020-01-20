@@ -6,12 +6,15 @@ import dualquest.game.logic.WorldManager;
 import dualquest.util.Broadcaster;
 import dualquest.util.WorldUtils;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
 
@@ -82,6 +85,7 @@ public class PlayerHandler implements Listener {
 
 	public static void joinSpectators(Player player) {
 		reset(player);
+		player.setGameMode(GameMode.SPECTATOR);
 		player.teleport(WorldManager.getSpectatorsSpawn());
 		spectators.add(player);
 	}
@@ -112,14 +116,30 @@ public class PlayerHandler implements Listener {
 		}
 	}
 
-	@EventHandler
-	public void deadPlayerInteract(EntityDamageByEntityEvent e) {
+	@EventHandler(priority = EventPriority.HIGH)
+	public void deadPlayerDamage(EntityDamageEvent e) {
+		if(e.getEntity() instanceof ArmorStand) {
+			ArmorStand stand = (ArmorStand) e.getEntity();
+			if(stand.hasMetadata("dead_player")) {
+				for(DQPlayer dqPlayer : getPlayerList()) {
+					if(dqPlayer.hasQuitStand() && dqPlayer.getQuitStand() == stand) {
+						dqPlayer.killAsArmorStand(null);
+						break;
+					}
+				}
+				e.setCancelled(true);
+			}
+		}
+	}
+
+	@EventHandler(priority = EventPriority.LOW)
+	public void deadPlayerPunch(EntityDamageByEntityEvent e) {
 		if(e.getDamager() instanceof Player && e.getEntity() instanceof ArmorStand) {
 			Player player = (Player) e.getDamager();
 			ArmorStand stand = (ArmorStand) e.getEntity();
 			if(stand.hasMetadata("dead_player")) {
 				for(DQPlayer dqPlayer : getPlayerList()) {
-					if(dqPlayer.getQuitStand() == stand) {
+					if(dqPlayer.hasQuitStand() && dqPlayer.getQuitStand() == stand) {
 						dqPlayer.killAsArmorStand(DQPlayer.fromPlayer(player));
 						break;
 					}
@@ -143,7 +163,8 @@ public class PlayerHandler implements Listener {
 		Player player = e.getEntity();
 		DQPlayer dqPlayer = DQPlayer.fromPlayer(player);
 		if(dqPlayer != null && dqPlayer.isValid()) {
-
+			heal(player);
+			dqPlayer.death();
 		}
 	}
 
@@ -180,7 +201,7 @@ public class PlayerHandler implements Listener {
 		} else {
 			dqPlayer.rejoin(player);
 		}
-		ScoreboardHandler.updateScoreboardTeams();
+		ScoreboardHandler.updateScoreboardTeamsLater();
 	}
 
 	@EventHandler
