@@ -4,6 +4,7 @@ import com.google.common.collect.Streams;
 import dualquest.game.logic.ScoreboardHandler;
 import dualquest.game.logic.WorldManager;
 import dualquest.util.Broadcaster;
+import dualquest.util.EntityUtils;
 import dualquest.util.WorldUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -83,6 +84,18 @@ public class PlayerHandler implements Listener {
 		}
 	}
 
+	public static void moveDeadQuestersToSpectators() {
+		for(DQPlayer player : getPlayerList().selector().spectatingQuesters().select()) {
+			player.moveToSpectators();
+		}
+	}
+
+	public static void resurrectQuesters() {
+		for(DQPlayer player : getPlayerList().selector().spectatingQuesters().select()) {
+			player.respawn();
+		}
+	}
+
 	public static void joinSpectators(Player player) {
 		reset(player);
 		player.setGameMode(GameMode.SPECTATOR);
@@ -93,19 +106,11 @@ public class PlayerHandler implements Listener {
 	public static void reset(Player player) {
 		player.getInventory().clear();
 		player.getActivePotionEffects().forEach(ef -> player.removePotionEffect(ef.getType()));
-		heal(player);
+		EntityUtils.heal(player);
 		player.setFireTicks(0);
 		player.setNoDamageTicks(0);
 		player.setExp(0);
 		player.setLevel(0);
-	}
-
-	public static void heal(Player player) {
-		player.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(20);
-		player.setHealth(20);
-		player.setSaturation(20);
-		player.setExhaustion(20);
-		player.setFoodLevel(20);
 	}
 
 	@EventHandler
@@ -163,7 +168,7 @@ public class PlayerHandler implements Listener {
 		Player player = e.getEntity();
 		DQPlayer dqPlayer = DQPlayer.fromPlayer(player);
 		if(dqPlayer != null && dqPlayer.isValid()) {
-			heal(player);
+			EntityUtils.heal(player);
 			dqPlayer.death();
 		}
 	}

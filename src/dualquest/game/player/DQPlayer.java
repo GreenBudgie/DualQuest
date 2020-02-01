@@ -104,6 +104,11 @@ public class DQPlayer {
 		}
 	}
 
+	public void moveToSpectators() {
+		PlayerHandler.joinSpectators(player);
+		valid = false;
+	}
+
 	public void update() {
 		if(TaskManager.isSecUpdated()) {
 			if(!isOnServer()) {

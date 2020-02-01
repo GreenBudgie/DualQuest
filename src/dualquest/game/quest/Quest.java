@@ -8,6 +8,7 @@ import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
+import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 
@@ -51,11 +52,39 @@ public abstract class Quest {
 	}
 
 	public final void complete() {
+		for(Player spectator : PlayerHandler.getSpectators()) {
+			spectator.sendTitle(ChatColor.GOLD + "" + ChatColor.BOLD + "Квест" + ChatColor.RESET + ChatColor.YELLOW + " Выполнен!", "", 20, 60, 30);
+			spectator.playSound(spectator.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1F, 1F);
+		}
+		for(Player quester : PlayerHandler.getPlayerList().selector().questers().selectPlayers()) {
+			quester.sendTitle(ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Квест" + ChatColor.RESET + ChatColor.GREEN + " Выполнен!", "", 20, 60, 30);
+			quester.playSound(quester.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1F, 1.5F);
+		}
+		for(Player attacker : PlayerHandler.getPlayerList().selector().attackers().selectPlayers()) {
+			attacker.sendTitle(ChatColor.DARK_RED + "" + ChatColor.BOLD + "Квестеры " + ChatColor.RESET + ChatColor.RED + " выполнили квест!",
+					ChatColor.AQUA + getName(), 20, 60, 30);
+			attacker.playSound(attacker.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 1F, 1F);
+		}
+		PlayerHandler.resurrectQuesters();
 		onComplete();
 		deactivate();
 	}
 
 	public final void fail() {
+		for(Player spectator : PlayerHandler.getSpectators()) {
+			spectator.sendTitle(ChatColor.GOLD + "" + ChatColor.BOLD + "Квест" + ChatColor.RESET + ChatColor.YELLOW + " не Выполнен!", "", 20, 60, 30);
+			spectator.playSound(spectator.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1F, 1F);
+		}
+		for(Player quester : PlayerHandler.getPlayerList().selector().questers().selectPlayers()) {
+			quester.sendTitle(ChatColor.DARK_RED + "" + ChatColor.BOLD + "Квест " + ChatColor.RESET + ChatColor.ITALIC + ChatColor.GOLD + "не" + ChatColor.RESET
+					+ ChatColor.RED + " Выполнен!", "", 20, 60, 30);
+			quester.playSound(quester.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 1F, 1F);
+		}
+		for(Player attacker : PlayerHandler.getPlayerList().selector().attackers().selectPlayers()) {
+			attacker.sendTitle(ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Квестеры" + ChatColor.RESET + ChatColor.GREEN + " провалили квест!",
+					ChatColor.AQUA + getName(), 20, 60, 30);
+			attacker.playSound(attacker.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1F, 1.5F);
+		}
 		onFail();
 		deactivate();
 	}

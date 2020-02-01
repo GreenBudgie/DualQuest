@@ -42,6 +42,10 @@ public enum PlayerTeam {
 		return getTeam(player) == this;
 	}
 
+	public PlayerTeam opposite() {
+		return this == QUESTERS ? ATTACKERS : QUESTERS;
+	}
+
 	public void both(Consumer<PlayerTeam> action) {
 		action.accept(QUESTERS);
 		action.accept(ATTACKERS);

@@ -83,6 +83,16 @@ public class WorldManager {
 		}
 	}
 
+	public static void setupWorldBorder() {
+		WorldBorder border = gameWorld.getWorldBorder();
+		border.setSize(getRelativeWorldSize());
+		border.setWarningTime(0);
+		border.setWarningDistance(0);
+		border.setDamageBuffer(0);
+		border.setDamageAmount(0);
+		border.setCenter(spawnLocation);
+	}
+
 	private static void setupLocations() {
 		double angle = MathUtils.randomRangeDouble(0, Math.PI * 2);
 		int x = (int) (distanceBetweenTeams / 2 * Math.cos(angle));

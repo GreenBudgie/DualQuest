@@ -70,8 +70,8 @@ public class TaskManager {
 	 * @return Result in minutes:seconds form
 	 */
 	public static String formatTime(int seconds) {
-		Date date = new Date((long) (seconds * 1000));
-		return (seconds >= 3600 ? String.valueOf((int) Math.floor(seconds / 3600.0)) + ":" : "") + new SimpleDateFormat("mm:ss").format(date);
+		Date date = new Date(seconds * 1000);
+		return (seconds >= 3600 ? (int) Math.floor(seconds / 3600.0) + ":" : "") + new SimpleDateFormat("mm:ss").format(date);
 	}
 
 	public static void invokeLater(Runnable task) {

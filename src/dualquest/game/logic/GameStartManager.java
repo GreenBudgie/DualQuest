@@ -48,6 +48,8 @@ public class GameStartManager implements Listener {
 		if(GameState.isPlaying()) throw new IllegalStateException("Cannot start the game at the current moment! It's already running");
 		if(!WorldManager.hasWorld()) throw new IllegalStateException("Cannot start without the generated world!");
 
+		WorldManager.setupWorldBorder();
+
 		boolean fast = ArrayUtils.contains(options, Option.FAST);
 
 		PlayerHandler.initPlayerList(Bukkit.getOnlinePlayers());

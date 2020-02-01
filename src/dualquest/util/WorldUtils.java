@@ -2,10 +2,11 @@ package dualquest.util;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.v1_15_R1.CraftWorld;
 import org.bukkit.entity.Entity;
+import org.bukkit.util.NumberConversions;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class WorldUtils {
@@ -23,10 +24,36 @@ public class WorldUtils {
 	public static <T extends Entity> List<T> getEntitiesInRange(Location pivot, double range, Class<T> entityClass) {
 		if(!pivot.isWorldLoaded()) throw new IllegalArgumentException("Pivot location's world is not present!");
 		List<T> list = new ArrayList<>();
-		pivot.getWorld().getEntities().stream()
-				.filter(entity -> entityClass.isInstance(entity) && entity.getLocation().getWorld() == pivot.getWorld() && entity.getLocation().distance(pivot) <= range)
-				.forEach(entity -> list.add((T) entity));
+		pivot.getWorld().getEntities().stream().filter(entity -> entityClass.isInstance(entity) && entity.getLocation().getWorld() == pivot.getWorld()
+				&& entity.getLocation().distance(pivot) <= range).forEach(entity -> list.add((T) entity));
 		return list;
+	}
+
+	public static <T extends Entity> T getNearestEntity(Location pivot, Class<T> entityClass) {
+		if(!pivot.isWorldLoaded()) throw new IllegalArgumentException("Pivot location's world is not present!");
+		Comparator<Entity> comparatorByDistance = Comparator.comparingDouble(entity -> entity.getLocation().distance(pivot));
+		Entity found = pivot.getWorld().getEntities().stream()
+				.filter(entity -> entityClass.isInstance(entity) && entity.getLocation().getWorld() == pivot.getWorld()).min(comparatorByDistance).orElse(null);
+		return (T) found;
+	}
+
+	public static <T extends Entity> T getFurthestEntity(Location pivot, Class<T> entityClass) {
+		if(!pivot.isWorldLoaded()) throw new IllegalArgumentException("Pivot location's world is not present!");
+		Comparator<Entity> comparatorByDistance = Comparator.comparingDouble(entity -> entity.getLocation().distance(pivot));
+		Entity found = pivot.getWorld().getEntities().stream()
+				.filter(entity -> entityClass.isInstance(entity) && entity.getLocation().getWorld() == pivot.getWorld()).max(comparatorByDistance).orElse(null);
+		return (T) found;
+	}
+
+	public static double distanceFlat(Location l, Location l2) {
+		if(l == null) {
+			throw new IllegalArgumentException("Cannot measure distance to a null location");
+		} else if(l.getWorld() == null || l2.getWorld() == null) {
+			throw new IllegalArgumentException("Cannot measure distance to a null world");
+		} else if(l.getWorld() != l2.getWorld()) {
+			throw new IllegalArgumentException("Cannot measure distance between " + l2.getWorld().getName() + " and " + l.getWorld().getName());
+		}
+		return Math.sqrt(NumberConversions.square(l.getX() - l2.getX()) + NumberConversions.square(l.getZ() - l2.getZ()));
 	}
 
 	/**

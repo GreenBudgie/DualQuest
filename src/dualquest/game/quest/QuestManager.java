@@ -1,6 +1,9 @@
 package dualquest.game.quest;
 
 import com.google.common.collect.Lists;
+import dualquest.game.logic.GameProcess;
+import dualquest.game.logic.GameState;
+import dualquest.game.player.PlayerHandler;
 import dualquest.util.MathUtils;
 import dualquest.util.TaskManager;
 
@@ -39,6 +42,10 @@ public class QuestManager {
 		previouslyActivated.add(quest);
 	}
 
+	public static int getActivatedQuestsCount() {
+		return previouslyActivated.size();
+	}
+
 	public static void cleanup() {
 		currentQuest = null;
 		previouslyActivated.clear();
@@ -49,12 +56,16 @@ public class QuestManager {
 		if(currentQuest != null) {
 			currentQuest.update();
 		} else {
-			if(TaskManager.isSecUpdated()) {
+			if(TaskManager.isSecUpdated() && GameState.GAME.isRunning()) {
 				if(timeToAddNext > 0) {
 					timeToAddNext--;
 				} else {
-					timeToAddNext = 5;
-					activateRandomQuest();
+					if(getActivatedQuestsCount() < 3) {
+						timeToAddNext = 5;
+						activateRandomQuest();
+					} else {
+						GameProcess.initDeathmatch();
+					}
 				}
 			}
 		}

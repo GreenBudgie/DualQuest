@@ -4,7 +4,7 @@ import java.util.stream.Stream;
 
 public enum GameState {
 
-	STOPPED, VOTING, PREPARING, GAME, ENDING;
+	STOPPED, VOTING, PREPARING, GAME, DEATHMATCH, ENDING;
 
 	public void set() {
 		setState(this);
@@ -12,6 +12,10 @@ public enum GameState {
 
 	public void set(int timeToNextPhase) {
 		setState(this, timeToNextPhase);
+	}
+
+	public boolean isRunning() {
+		return currentState == this;
 	}
 
 	private static GameState currentState = STOPPED;
