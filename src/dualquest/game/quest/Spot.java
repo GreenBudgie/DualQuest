@@ -2,7 +2,6 @@ package dualquest.game.quest;
 
 import de.slikey.effectlib.effect.WarpEffect;
 import dualquest.game.Plugin;
-import dualquest.game.logic.DualQuest;
 import dualquest.game.player.PlayerHandler;
 import dualquest.util.EntityUtils;
 import dualquest.util.ParticleUtils;
@@ -35,10 +34,10 @@ public class Spot implements Listener {
 	private Location location;
 	private SpottedQuest owner;
 	private int size = 3;
-	private double iter = size;
-	private boolean checkPlayers = true, catchPlayer = false, preventInteractions = false, active = true;
-	private Player catched = null;
+	private double iteration = size;
+	private boolean checkPlayers = true, preventInteractions = true, active = true;
 	private ArmorStand label = null;
+	private String name = null;
 
 	public Spot(SpottedQuest owner, Location location) {
 		this.location = location;
@@ -47,9 +46,13 @@ public class Spot implements Listener {
 	}
 
 	public void setLabel(String label) {
-		this.label = (ArmorStand) location.getWorld().spawnEntity(location.clone().add(0, (int) (size / 2.0), 0), EntityType.ARMOR_STAND);
-		this.label.setCustomNameVisible(true);
-		this.label.setCustomName(label);
+		this.label = (ArmorStand) location.getWorld().spawnEntity(location.clone().add(0, (int) Math.ceil(size / 1.5), 0), EntityType.ARMOR_STAND);
+		this.name = label;
+		if(active) {
+			this.label.setCustomNameVisible(true);
+			this.label.setCustomName(this.name);
+		}
+		this.label.setVisible(false);
 		this.label.setMarker(true);
 		this.label.setInvulnerable(true);
 		this.label.setGravity(false);
@@ -62,6 +65,7 @@ public class Spot implements Listener {
 	public void removeLabel() {
 		if(hasLabel()) {
 			label.remove();
+			name = null;
 			label = null;
 		}
 	}
@@ -82,15 +86,6 @@ public class Spot implements Listener {
 		this.checkPlayers = checkPlayers;
 	}
 
-	public boolean doCatchPlayer() {
-		return catchPlayer;
-	}
-
-	public void setCatchPlayer(boolean catchPlayer) {
-		this.catchPlayer = catchPlayer;
-		setCheckPlayers(true);
-	}
-
 	public boolean doPreventInteractions() {
 		return preventInteractions;
 	}
@@ -105,7 +100,7 @@ public class Spot implements Listener {
 
 	public void setSize(int size) {
 		this.size = size;
-		this.iter = size;
+		this.iteration = size;
 	}
 
 	public boolean isInside(Location l) {
@@ -131,9 +126,21 @@ public class Spot implements Listener {
 
 	public void setActive(boolean active) {
 		this.active = active;
+		if(hasLabel()) {
+			if(active) {
+				label.setCustomName(name);
+				label.setCustomNameVisible(true);
+			} else {
+				label.setCustomName(null);
+				label.setCustomNameVisible(false);
+			}
+		}
 	}
 
 	public void unregister() {
+		if(hasLabel()) {
+			label.remove();
+		}
 		HandlerList.unregisterAll(this);
 	}
 
@@ -141,18 +148,15 @@ public class Spot implements Listener {
 		if(active) {
 			if(TaskManager.ticksPassed(10)) {
 				WarpEffect ef = new WarpEffect(ParticleUtils.effectManager);
-				ef.setLocation(location.clone().add(0, iter + 0.5, 0));
+				ef.setLocation(location.clone().add(0, iteration + 0.5, 0));
 				ef.rings = 1;
 				ef.iterations = 1;
 				ef.particles = size * (size + 2);
 				ef.radius = size;
 				ef.particle = hasPlayersInside() && checkPlayers ? Particle.FLAME : Particle.CLOUD;
 				ef.start();
-				if(iter < 0) iter = size;
-				else iter -= 0.5;
-			}
-			if(catched != null && !isInside(catched.getLocation())) {
-				returnPlayer(catched);
+				if(iteration < 0) iteration = size;
+				else iteration -= 0.5;
 			}
 		}
 	}
@@ -191,37 +195,18 @@ public class Spot implements Listener {
 		}
 	}
 
-	public boolean hasCatchedPlayer() {
-		return catched != null;
-	}
-
-	public Player getCatchedPlayer() {
-		return catched;
-	}
-
-	private void returnPlayer(Player p) {
-		EntityUtils.teleport(p, location, true, true);
-		p.playSound(p.getLocation(), Sound.ITEM_CHORUS_FRUIT_TELEPORT, 0.5F, 0.5F);
-	}
-
 	@EventHandler
 	public void checkMoves(PlayerMoveEvent e) {
 		if(active && checkPlayers) {
 			Player p = e.getPlayer();
-			if(PlayerHandler.isPlaying(p) && p.getWorld() == location.getWorld()) {
+			if(PlayerHandler.isPlaying(p) && p.getWorld() == location.getWorld() && e.getTo() != null) {
 				List<Player> inside = getPlayersInside();
 				if(inside.contains(p)) {
 					if(!isInside(e.getTo())) {
-						if(!catchPlayer || (hasCatchedPlayer() && p != catched)) {
-							owner.onSpotLeave(this, p);
-						}
+						owner.onSpotLeave(this, p);
 					}
 				} else {
 					if(isInside(e.getTo())) {
-						if(catchPlayer && !hasCatchedPlayer()) {
-							catched = p;
-							owner.onCatch(this, p);
-						}
 						owner.onSpotEnter(this, p);
 					}
 				}

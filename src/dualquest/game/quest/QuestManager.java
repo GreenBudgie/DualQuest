@@ -15,6 +15,7 @@ public class QuestManager {
 
 	public static final QuestSurvival SURVIVAL = new QuestSurvival();
 	public static final QuestFight FIGHT = new QuestFight();
+	public static final QuestCheckpoint CHECKPOINT = new QuestCheckpoint();
 
 	private static List<Quest> quests;
 	private static Set<Quest> previouslyActivated = new HashSet<>();
@@ -23,7 +24,7 @@ public class QuestManager {
 	private static int timeToAddNext = 5;
 
 	public static void init() {
-		quests = Lists.newArrayList(SURVIVAL, FIGHT);
+		quests = Lists.newArrayList(SURVIVAL, FIGHT, CHECKPOINT);
 	}
 
 	public static List<Quest> getQuests() {
@@ -47,6 +48,9 @@ public class QuestManager {
 	}
 
 	public static void cleanup() {
+		if(currentQuest != null) {
+			currentQuest.deactivate();
+		}
 		currentQuest = null;
 		previouslyActivated.clear();
 		timeToAddNext = 5;

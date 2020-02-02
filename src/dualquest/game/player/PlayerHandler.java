@@ -44,6 +44,11 @@ public class PlayerHandler implements Listener {
 		playerList = PlayerList.empty();
 	}
 
+	@SuppressWarnings("UnstableApiUsage")
+	public static List<Player> getWhoCanSeeQuest() {
+		return Streams.concat(playerList.selector().questers().selectPlayers().stream(), spectators.stream()).collect(Collectors.toList());
+	}
+
 	public static List<Player> getSpectators() {
 		return spectators;
 	}

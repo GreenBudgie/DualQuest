@@ -42,6 +42,10 @@ public abstract class Quest {
 		fail();
 	}
 
+	public void setTimeToEnd(int time) {
+		this.timeToEnd = time;
+	}
+
 	public void update() {
 		if(TaskManager.isSecUpdated()) {
 			timeToEnd--;
@@ -93,9 +97,9 @@ public abstract class Quest {
 		if(this instanceof Listener) {
 			Bukkit.getPluginManager().registerEvents((Listener) this, Plugin.INSTANCE);
 		}
-		timeToEnd = getDuration() * 60;
 		QuestManager.currentQuest = this;
 		onActivate();
+		timeToEnd = getDuration() * 60;
 		Broadcaster.each(PlayerHandler.getPlayerList().selector().questers().selectPlayers()).and(PlayerHandler.getSpectators()).toChat(getAnnounceMessage())
 				.sound(Sound.ENTITY_ENDER_DRAGON_FLAP, 1F, 0.8F).title(ChatColor.DARK_AQUA + "Новый квест", ChatColor.AQUA + getName(), 10, 40, 20);
 		Broadcaster.each(PlayerHandler.getPlayerList().selector().attackers().selectPlayers())

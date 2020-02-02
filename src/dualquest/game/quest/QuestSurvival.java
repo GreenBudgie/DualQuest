@@ -35,7 +35,7 @@ public class QuestSurvival extends Quest {
 
 	@Override
 	public void onDeactivate() {
-		PlayerHandler.getPlayerList().selector().aliveQuesters().selectPlayers().forEach(player -> EntityUtils.setMaxHealth(player, 20, false));
+		PlayerHandler.getPlayerList().selector().aliveQuesters().selectPlayers().forEach(player -> EntityUtils.setMaxHealth(player, 20, true));
 	}
 
 	@Override

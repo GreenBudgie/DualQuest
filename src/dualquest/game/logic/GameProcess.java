@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
 public class GameProcess implements Listener {
 
 	private static int timeToNextPhase = 0;
+	public static boolean skipState = false; //Debug field
 
 	public static void update() {
 		String actionBar = null;
@@ -32,8 +33,9 @@ public class GameProcess implements Listener {
 		case VOTING:
 			if(TaskManager.isSecUpdated()) {
 				actionBar = ChatColor.YELLOW + "Голосование: " + ChatColor.AQUA + TaskManager.formatTime(timeToNextPhase);
-				if(timeToNextPhase <= 0) {
+				if(timeToNextPhase <= 0 || skipState) {
 					GameStartManager.endVoting();
+					skipState = false;
 				}
 			}
 			break;
@@ -68,20 +70,30 @@ public class GameProcess implements Listener {
 							.sound(Sound.BLOCK_COMPARATOR_CLICK, 0.5F, timeToNextPhase == 3 ? 1.2F : (timeToNextPhase == 2 ? 1.1F : 1F));
 				}
 				actionBar = ChatColor.YELLOW + "Подготовка: " + ChatColor.AQUA + TaskManager.formatTime(timeToNextPhase);
-				if(timeToNextPhase <= 0) {
+				if(timeToNextPhase <= 0 || skipState) {
 					GameStartManager.endPreparing();
+					skipState = false;
 				}
 			}
 			break;
 		case GAME:
 			QuestManager.update();
+			if(skipState) {
+				initDeathmatch();
+				skipState = false;
+			}
 			break;
 		case DEATHMATCH:
+			if(skipState) {
+				win(null);
+				GameState.ENDING.set();
+			}
 			break;
 		case ENDING:
 			if(TaskManager.isSecUpdated()) {
-				if(timeToNextPhase <= 0) {
+				if(timeToNextPhase <= 0 || skipState) {
 					endGame();
+					skipState = false;
 				}
 			}
 			break;

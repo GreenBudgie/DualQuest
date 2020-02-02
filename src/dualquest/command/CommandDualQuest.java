@@ -2,7 +2,10 @@ package dualquest.command;
 
 import com.google.common.collect.Lists;
 import dualquest.game.logic.*;
+import dualquest.game.quest.Quest;
+import dualquest.game.quest.QuestManager;
 import org.apache.commons.lang.ArrayUtils;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -52,6 +55,9 @@ public class CommandDualQuest implements CommandExecutor, TabCompleter {
 		if(args.length == 1 && args[0].equalsIgnoreCase("end") && GameState.isPlaying()) {
 			GameProcess.endGame();
 		}
+		if(args.length == 1 && args[0].equalsIgnoreCase("skip") && GameState.isPlaying()) {
+			GameProcess.skipState = true;
+		}
 		if(args.length == 2 && args[0].equalsIgnoreCase("tp") && GameState.isPlaying()) {
 			if(args[1].equalsIgnoreCase("questers_spawn")) {
 				player.teleport(WorldManager.getQuestersSpawn());
@@ -63,13 +69,71 @@ public class CommandDualQuest implements CommandExecutor, TabCompleter {
 				player.teleport(WorldManager.getSpawnLocation());
 			}
 		}
+		if(args.length >= 2 && args[0].equalsIgnoreCase("quest") && GameState.GAME.isRunning()) {
+			if(args[1].equalsIgnoreCase("change")) {
+				if(args.length == 2) {
+					if(QuestManager.getQuests().size() == QuestManager.getActivatedQuestsCount()) {
+						player.sendMessage(ChatColor.RED + "Все квесты закончились!");
+					} else {
+						Quest currentQuest = QuestManager.getCurrentQuest();
+						if(currentQuest != null) {
+							currentQuest.deactivate();
+						}
+						QuestManager.activateRandomQuest();
+					}
+				} else {
+					Quest quest = QuestManager.getQuests().stream().filter(q -> q.getClass().getSimpleName().endsWith(args[2])).findFirst().orElse(null);
+					if(quest != null) {
+						Quest currentQuest = QuestManager.getCurrentQuest();
+						if(currentQuest != null) {
+							currentQuest.deactivate();
+							quest.activate();
+						}
+					} else {
+						player.sendMessage(ChatColor.RED + "Такого квеста не существует!");
+					}
+				}
+			}
+			if(args[1].equalsIgnoreCase("complete")) {
+				Quest currentQuest = QuestManager.getCurrentQuest();
+				if(currentQuest != null) {
+					currentQuest.complete();
+				} else {
+					player.sendMessage(ChatColor.RED + "Сейчас нет квеста!");
+				}
+			}
+			if(args[1].equalsIgnoreCase("fail")) {
+				Quest currentQuest = QuestManager.getCurrentQuest();
+				if(currentQuest != null) {
+					currentQuest.fail();
+				} else {
+					player.sendMessage(ChatColor.RED + "Сейчас нет квеста!");
+				}
+			}
+			if(args[1].equalsIgnoreCase("deactivate")) {
+				Quest currentQuest = QuestManager.getCurrentQuest();
+				if(currentQuest != null) {
+					currentQuest.deactivate();
+				} else {
+					player.sendMessage(ChatColor.RED + "Сейчас нет квеста!");
+				}
+			}
+			if(args[1].equalsIgnoreCase("end_time")) {
+				Quest currentQuest = QuestManager.getCurrentQuest();
+				if(currentQuest != null) {
+					currentQuest.setTimeToEnd(2);
+				} else {
+					player.sendMessage(ChatColor.RED + "Сейчас нет квеста!");
+				}
+			}
+		}
 		return true;
 	}
 
 	@Override
 	public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
 		if(args.length == 1) {
-			return getMatchingStrings(args, "start", "end", "tp");
+			return getMatchingStrings(args, "start", "end", "tp", "quest", "skip");
 		}
 		if(args.length > 1 && args[0].equalsIgnoreCase("start")) {
 			return getMatchingStrings(args,
@@ -78,6 +142,12 @@ public class CommandDualQuest implements CommandExecutor, TabCompleter {
 		}
 		if(args.length == 2 && args[0].equalsIgnoreCase("tp")) {
 			return getMatchingStrings(args, "questers_spawn", "world_spawn", "attackers_spawn");
+		}
+		if(args.length == 2 && args[0].equalsIgnoreCase("quest")) {
+			return getMatchingStrings(args, "change", "complete", "fail", "deactivate", "end_time");
+		}
+		if(args.length == 3 && args[0].equalsIgnoreCase("quest") && args[1].equalsIgnoreCase("change")) {
+			return getMatchingStrings(args, QuestManager.getQuests().stream().map(quest -> quest.getClass().getSimpleName().replaceAll("Quest", "")).collect(Collectors.toList()));
 		}
 		return null;
 	}
